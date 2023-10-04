@@ -104,21 +104,10 @@ int main( int argc, char** argv )
 
             LOG_DEBUG( "Processing input: [%s][%s]", command, arguments );
 
-            // line now consists of a keyword (command) and (potentially) one or more arguments
-            // split for processing
-            if ( strcmp( command, "uci" ) == 0 )
+            if ( !UCI_processCommand( &uci, &runtimeSetup, command, arguments ) )
             {
-                UCI_uci( &uci, &runtimeSetup, arguments );
-            }
-            else if ( strcmp( command, "quit" ) == 0 )
-            {
-                UCI_quit( &uci, &runtimeSetup, arguments );
+                // Break out of main loop and shut down
                 break;
-            }
-            else
-            {
-                // Ignore any unknown commands
-                LOG_ERROR( "Unrecognised input: %s", command );
             }
         }
 

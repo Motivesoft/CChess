@@ -15,5 +15,17 @@ void UCI_shutdown( struct UCIConfiguration* self );
 
 // UCI methods
 
-void UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments );
-void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments );
+typedef bool ( *UciCommandHandler )( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments );
+
+struct UciCommandHandler
+{
+    const char* command;
+    UciCommandHandler handler;
+};
+
+struct UciCommandHandler uciCommandHandlers[];
+
+bool UCI_processCommand( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* command, const char* arguments );
+
+bool UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments );
+bool UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments );

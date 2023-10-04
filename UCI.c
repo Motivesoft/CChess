@@ -36,18 +36,44 @@ void UCI_shutdown( struct UCIConfiguration* self )
 
 // UCI interface
 
-void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+struct UciCommandHandler uciCommandHandlers[] = 
+{
+    { "uci", UCI_uci },
+    { "quit", UCI_quit },
+    { NULL, NULL }
+};
+
+bool UCI_processCommand( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* command, const char* arguments )
+{
+    for ( int loop = 0; uciCommandHandlers[ loop ].command != NULL; loop++ )
+    {
+        if ( strcmp( command, uciCommandHandlers[ loop ].command ) == 0 )
+        {
+            return uciCommandHandlers[ loop ].handler( self, runtimeSetup, arguments );
+        }
+    }
+
+    LOG_ERROR( "Unrecognised command: %s", command );
+
+    return true;
+}
+
+bool UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
 {
     LOG_DEBUG( "Processing uci command" );
 
     UCI_broadcast( runtimeSetup, "id name %s", "CChess" );
     UCI_broadcast( runtimeSetup, "id author %s", "Motivesoft" );
     UCI_broadcast( runtimeSetup, "uciok" );
+
+    return true;
 }
 
-void UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+bool UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
 {
     LOG_DEBUG( "Processing quit command" );
 
     // TODO stop any current activity and threads as quickly as possible
+
+    return false;
 }
