@@ -24,19 +24,19 @@ void UCI_broadcast( struct RuntimeSetup* runtimeSetup, const char* format, ... )
 
 // Control methods
 
-struct UCIConfiguration UCI_createUCIConfiguration()
+struct UCIConfiguration* UCI_createUCIConfiguration()
 {
-    struct UCIConfiguration uci;
+    struct UCIConfiguration* uci = malloc( sizeof( struct UCIConfiguration ) );
 
     // Starting position
-    uci.fen = STARTPOS;
+    uci->fen = STARTPOS;
 
     return uci;
 }
 
 void UCI_shutdown( struct UCIConfiguration* self )
 {
-    // TODO release any resources
+    free( self );
 }
 
 // UCI interface

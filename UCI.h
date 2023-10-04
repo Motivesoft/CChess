@@ -10,7 +10,7 @@ struct UCIConfiguration
 
 // Control methods
 
-struct UCIConfiguration UCI_createUCIConfiguration();
+struct UCIConfiguration* UCI_createUCIConfiguration();
 void UCI_shutdown( struct UCIConfiguration* self );
 
 // UCI methods

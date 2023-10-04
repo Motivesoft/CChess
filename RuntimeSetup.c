@@ -7,20 +7,20 @@
 #define LOG_WARN( ... ) log( self, WARN, __VA_ARGS__ ) 
 #define LOG_ERROR( ... ) log( self, ERROR, __VA_ARGS__ ) 
 
-struct RuntimeSetup RuntimeSetup_createRuntimeSetup()
+struct RuntimeSetup* RuntimeSetup_createRuntimeSetup()
 {
-    struct RuntimeSetup runtimeSetup;
+    struct RuntimeSetup* runtimeSetup = malloc( sizeof( struct RuntimeSetup ) );
 
-    RuntimeSetup_resetInput( &runtimeSetup );
-    RuntimeSetup_resetOutput( &runtimeSetup );
-    RuntimeSetup_resetLogger( &runtimeSetup );
+    RuntimeSetup_resetInput( runtimeSetup );
+    RuntimeSetup_resetOutput( runtimeSetup );
+    RuntimeSetup_resetLogger( runtimeSetup );
 
-    runtimeSetup.debug = false;
+    runtimeSetup->debug = false;
 
     return runtimeSetup;
 }
 
-void RuntimeSetup_close( struct RuntimeSetup* self )
+void RuntimeSetup_shutdown( struct RuntimeSetup* self )
 {
     if ( self->input != stdin )
     {
@@ -34,6 +34,8 @@ void RuntimeSetup_close( struct RuntimeSetup* self )
     {
         fclose( self->logger );
     }
+
+    free( self );
 }
 
 void RuntimeSetup_resetInput( struct RuntimeSetup* self )
