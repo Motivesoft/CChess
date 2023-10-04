@@ -2,6 +2,11 @@
 
 #include "RuntimeSetup.h"
 
+#define LOG_DEBUG( ... ) log( self, DEBUG, __VA_ARGS__ ) 
+#define LOG_INFO( ... ) log( self, INFO, __VA_ARGS__ ) 
+#define LOG_WARN( ... ) log( self, WARN, __VA_ARGS__ ) 
+#define LOG_ERROR( ... ) log( self, ERROR, __VA_ARGS__ ) 
+
 struct RuntimeSetup RuntimeSetup_createRuntimeSetup()
 {
     struct RuntimeSetup runtimeSetup;
@@ -10,40 +15,40 @@ struct RuntimeSetup RuntimeSetup_createRuntimeSetup()
     RuntimeSetup_resetOutput( &runtimeSetup );
     RuntimeSetup_resetLogger( &runtimeSetup );
 
-    RuntimeSetup_setDebug( &runtimeSetup, false );
+    runtimeSetup.debug = false;
 
     return runtimeSetup;
 }
 
-void RuntimeSetup_close( struct RuntimeSetup* runtimeSetup )
+void RuntimeSetup_close( struct RuntimeSetup* self )
 {
-    if ( runtimeSetup->input != stdin )
+    if ( self->input != stdin )
     {
-        fclose( runtimeSetup->input );
+        fclose( self->input );
     }
-    if ( runtimeSetup->output != stdout )
+    if ( self->output != stdout )
     {
-        fclose( runtimeSetup->output );
+        fclose( self->output );
     }
-    if ( runtimeSetup->logger != stderr )
+    if ( self->logger != stderr )
     {
-        fclose( runtimeSetup->logger );
+        fclose( self->logger );
     }
 }
 
-void RuntimeSetup_resetInput( struct RuntimeSetup* runtimeSetup )
+void RuntimeSetup_resetInput( struct RuntimeSetup* self )
 {
-    runtimeSetup->input = stdin;
+    self->input = stdin;
 }
 
-void RuntimeSetup_resetOutput( struct RuntimeSetup* runtimeSetup )
+void RuntimeSetup_resetOutput( struct RuntimeSetup* self )
 {
-    runtimeSetup->output = stdout;
+    self->output = stdout;
 }
 
-void RuntimeSetup_resetLogger( struct RuntimeSetup* runtimeSetup )
+void RuntimeSetup_resetLogger( struct RuntimeSetup* self )
 {
-    runtimeSetup->logger = stderr;
+    self->logger = stderr;
 }
 
 FILE* RuntimeSetup_getInput( struct RuntimeSetup* self )
@@ -96,6 +101,7 @@ errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename 
 
 void RuntimeSetup_setDebug( struct RuntimeSetup* self, bool debug )
 {
+    LOG_DEBUG( "Set debug %s", (debug ? "on" : "off") );
     self->debug = debug;
 }
 
@@ -136,6 +142,3 @@ void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ..
 
     va_end( args );
 }
-
-#define LOG_DEBUG( runtimeSetup, ... )  LOG( runtimeSetup, "\x1B[36m", "DEBUG", __VA_ARGS__ ) 
-#define LOG_ERROR( runtimeSetup, ... )  LOG( runtimeSetup, "\x1B[31m", "ERROR", __VA_ARGS__ ) 

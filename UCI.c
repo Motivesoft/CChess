@@ -104,7 +104,7 @@ bool UCI_debug( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup
 
     if ( strlen( remainder ) )
     {
-        LOG_ERROR( "Unexected additional information passed to debug: %s", remainder );
+        LOG_WARN( "Unexpected additional information passed to debug ignored: %s", remainder );
     }
 
     return true;
