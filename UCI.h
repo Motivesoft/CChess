@@ -15,5 +15,5 @@ void UCI_shutdown( struct UCIConfiguration* self );
 
 // UCI methods
 
-void UCI_quit( struct UCIConfiguration* self );
+void UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup );
 void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup );

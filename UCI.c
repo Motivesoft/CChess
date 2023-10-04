@@ -4,6 +4,9 @@
 
 // Intrnal methods
 
+#define LOG_DEBUG( ... ) { log( runtimeSetup, DEBUG, __VA_ARGS__ ); }
+#define LOG_ERROR( ... ) { log( runtimeSetup, ERROR, __VA_ARGS__ ); }
+
 void UCI_broadcast( struct RuntimeSetup* runtimeSetup, const char* format, ... )
 {
     va_list args;
@@ -35,12 +38,16 @@ void UCI_shutdown( struct UCIConfiguration* self )
 
 void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup )
 {
+    LOG_DEBUG( "Processing uci command" );
+
     UCI_broadcast( runtimeSetup, "id name %s", "CChess" );
     UCI_broadcast( runtimeSetup, "id author %s", "Motivesoft" );
     UCI_broadcast( runtimeSetup, "uciok" );
 }
 
-void UCI_quit( struct UCIConfiguration* self )
+void UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup )
 {
+    LOG_DEBUG( "Processing quit command" );
+
     // TODO stop any current activity and threads as quickly as possible
 }

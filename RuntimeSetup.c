@@ -2,7 +2,7 @@
 
 #include "RuntimeSetup.h"
 
-struct RuntimeSetup RuntimeSetup_create()
+struct RuntimeSetup RuntimeSetup_createRuntimeSetup()
 {
     struct RuntimeSetup runtimeSetup;
 

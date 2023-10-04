@@ -19,7 +19,7 @@ int main( int argc, char** argv )
     printf( "CChess\n" );
 
     // Configure from command line args
-    struct RuntimeSetup runtimeSetup = RuntimeSetup_create();
+    struct RuntimeSetup runtimeSetup = RuntimeSetup_createRuntimeSetup();
 
     errno_t err = 0;
     for ( int loop = 1; loop < argc && !err; loop++ )
