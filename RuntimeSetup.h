@@ -7,6 +7,8 @@ struct RuntimeSetup
     FILE* input;
     FILE* output;
     FILE* logger;
+
+    bool debug;
 };
 
 // Control methods
@@ -30,6 +32,8 @@ errno_t RuntimeSetup_setInput( struct RuntimeSetup* self, const char* filename )
 errno_t RuntimeSetup_setOutput( struct RuntimeSetup* self, const char* filename );
 errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename );
 
+void RuntimeSetup_setDebug( struct RuntimeSetup* self, bool debug );
+
 // Helper methods
 
 char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferSize );
@@ -37,6 +41,8 @@ char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferS
 enum LogLevel
 {
     DEBUG,
+    INFO,
+    WARN,
     ERROR
 };
 

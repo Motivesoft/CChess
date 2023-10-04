@@ -10,6 +10,8 @@ struct RuntimeSetup RuntimeSetup_createRuntimeSetup()
     RuntimeSetup_resetOutput( &runtimeSetup );
     RuntimeSetup_resetLogger( &runtimeSetup );
 
+    RuntimeSetup_setDebug( &runtimeSetup, false );
+
     return runtimeSetup;
 }
 
@@ -92,6 +94,11 @@ errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename 
     return err;
 }
 
+void RuntimeSetup_setDebug( struct RuntimeSetup* self, bool debug )
+{
+    self->debug = debug;
+}
+
 char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferSize )
 {
     memset( buffer, 0, bufferSize );
@@ -100,8 +107,14 @@ char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferS
 
 void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... )
 {
-    static const char* label[] = { "DEBUG","ERROR" };
-    static const char* color[] = { "\x1B[36m","\x1B[31m" };
+    if ( level == DEBUG && !self->debug )
+    {
+        // Not configured
+        return;
+    }
+
+    static const char* label[] = { "DEBUG", "INFO ", "WARN ","ERROR" };
+    static const char* color[] = { "\x1B[36m", "\x1B[32m", "\x1B[33m", "\x1B[31m" };
 
     va_list args;
     va_start( args, format );

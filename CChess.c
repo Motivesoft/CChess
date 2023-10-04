@@ -12,6 +12,8 @@
 #define BUFFER_SIZE 4096
 
 #define LOG_DEBUG( ... ) { log( &runtimeSetup, DEBUG, __VA_ARGS__ ); }
+#define LOG_INFO( ... ) { log( &runtimeSetup, INFO, __VA_ARGS__ ); }
+#define LOG_WARN( ... ) { log( &runtimeSetup, WARN, __VA_ARGS__ ); }
 #define LOG_ERROR( ... ) { log( &runtimeSetup, ERROR, __VA_ARGS__ ); }
 
 int main( int argc, char** argv )
@@ -76,6 +78,10 @@ int main( int argc, char** argv )
                 LOG_ERROR( "Missing log filename" );
                 err = EINVAL;
             }
+        }
+        else if ( strcmp( argv[ loop ], "-debug" ) == 0 )
+        {
+            RuntimeSetup_setDebug( &runtimeSetup, true );
         }
         else
         {
