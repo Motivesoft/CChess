@@ -103,6 +103,8 @@ int main( int argc, char** argv )
                 continue;
             }
 
+            // line now consists of a keyword (command) and (potentially) one or more arguments
+            // split for processing
             if ( strcmp( line, "uci" ) == 0 )
             {
                 UCI_uci( &uci, &runtimeSetup );

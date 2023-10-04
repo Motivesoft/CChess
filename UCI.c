@@ -36,7 +36,7 @@ void UCI_shutdown( struct UCIConfiguration* self )
 
 // UCI interface
 
-void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup )
+void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
 {
     LOG_DEBUG( "Processing uci command" );
 
@@ -45,7 +45,7 @@ void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup )
     UCI_broadcast( runtimeSetup, "uciok" );
 }
 
-void UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup )
+void UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
 {
     LOG_DEBUG( "Processing quit command" );
 

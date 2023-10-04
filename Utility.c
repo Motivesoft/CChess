@@ -56,3 +56,25 @@ char* sanitize( char* string )
 
     return string;
 }
+
+bool spliterate( char* line, char** command, char** arguments )
+{
+    bool result = false;
+
+    *command = line;
+    *arguments = line;
+
+    for ( int loop = 0; loop < strlen( line ); loop++ )
+    {
+        if ( isspace( line[ loop ] ) )
+        {
+            line[ loop ] = '\0';
+            *arguments += loop + 1;
+
+            result = true;
+            break;
+        }
+    }
+
+    return result;
+}
