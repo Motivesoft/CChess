@@ -174,3 +174,40 @@ bool UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup,
 
     return false;
 }
+
+bool UCI_perft( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments )
+{
+    LOG_DEBUG( "Processing perft command" );
+
+    // Syntax:
+    //  perft [n] <fen>              - moves to depth [n] from <fen>, if supplied, or startpos otherwise
+    //  perft fen [fen-with-results] - moves based on expected results provided at the end of the [fen-with-results] string
+    //  perft file [filename]        - read mutliple [fen-with-results] lines from a text file and process one by one
+
+    // Which are we dealing with?
+    char* keyword;
+    char* remainder;
+    spliterate( arguments, &keyword, &remainder );
+
+    if ( strcmp( keyword, "file" ) == 0 )
+    {
+
+    }
+    if ( strcmp( keyword, "fen" ) == 0 )
+    {
+
+    }
+    else // Assume depth and optional fen
+    {
+
+    }
+
+    return false;
+}
+
+bool UCI_test( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments )
+{
+    LOG_DEBUG( "Processing test command" );
+
+    return false;
+}

@@ -38,3 +38,6 @@ bool UCI_go( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, c
 bool UCI_stop( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments );
 bool UCI_ponderhit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments );
 bool UCI_quit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments );
+
+bool UCI_perft( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments );
+bool UCI_test( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments );
