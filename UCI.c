@@ -36,9 +36,18 @@ void UCI_shutdown( struct UCIConfiguration* self )
 
 // UCI interface
 
-struct UciCommandHandler uciCommandHandlers[] = 
+struct UciCommandHandler uciCommandHandlers[] =
 {
     { "uci", UCI_uci },
+    { "debug", UCI_debug },
+    { "isready", UCI_isready },
+    { "setoption", UCI_setoption },
+    { "register", UCI_register },
+    { "ucinewgame", UCI_ucinewgame },
+    { "position", UCI_position },
+    { "go", UCI_go },
+    { "stop", UCI_stop },
+    { "ponderhit", UCI_ponderhit },
     { "quit", UCI_quit },
     { NULL, NULL }
 };
@@ -65,6 +74,68 @@ bool UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, 
     UCI_broadcast( runtimeSetup, "id name %s", "CChess" );
     UCI_broadcast( runtimeSetup, "id author %s", "Motivesoft" );
     UCI_broadcast( runtimeSetup, "uciok" );
+
+    return true;
+}
+
+bool UCI_debug( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing debug command" );
+
+    return true;
+}
+bool UCI_isready( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing isready command" );
+
+    return true;
+}
+
+bool UCI_setoption( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing setoption command" );
+
+    return true;
+}
+
+bool UCI_register( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing register command" );
+
+    return true;
+}
+
+bool UCI_ucinewgame( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing ucinewgame command" );
+
+    return true;
+}
+
+bool UCI_position( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing position command" );
+
+    return true;
+}
+
+bool UCI_go( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing go command" );
+
+    return true;
+}
+
+bool UCI_stop( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing stop command" );
+
+    return true;
+}
+
+bool UCI_ponderhit( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, const char* arguments )
+{
+    LOG_DEBUG( "Processing ponderhit command" );
 
     return true;
 }
