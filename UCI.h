@@ -1,5 +1,8 @@
 #pragma once
 
+#include "RuntimeSetup.h"
+#include "Utility.h"
+
 struct UCIConfiguration
 {
     char* fen;
@@ -13,3 +16,4 @@ void UCI_shutdown( struct UCIConfiguration* self );
 // UCI methods
 
 void UCI_quit( struct UCIConfiguration* self );
+void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup );

@@ -140,10 +140,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CChess.c" />
+    <ClCompile Include="RuntimeSetup.c" />
     <ClCompile Include="UCI.c" />
     <ClCompile Include="Utility.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="RuntimeSetup.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UCI.h" />
     <ClInclude Include="Utility.h" />

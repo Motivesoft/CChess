@@ -2,6 +2,18 @@
 
 #include "UCI.h"
 
+// Intrnal methods
+
+void UCI_broadcast( struct RuntimeSetup* runtimeSetup, const char* format, ... )
+{
+    va_list args;
+    va_start( args, format );
+    vfprintf( runtimeSetup->output, format, args );
+    fprintf( runtimeSetup->output, "\n" );
+    fflush( runtimeSetup->output );
+    va_end( args );
+}
+
 // Control methods
 
 struct UCIConfiguration UCI_createUCIConfiguration()
@@ -21,11 +33,11 @@ void UCI_shutdown( struct UCIConfiguration* self )
 
 // UCI interface
 
-void UCI_uci( struct UCIConfiguration* self, FILE* output )
+void UCI_uci( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup )
 {
-    fprintf( output, "id name %s\n", "CChess" );
-    fprintf( output, "id author %s\n", "Motivesoft" );
-    fprintf( output, "uciok\n" );
+    UCI_broadcast( runtimeSetup, "id name %s", "CChess" );
+    UCI_broadcast( runtimeSetup, "id author %s", "Motivesoft" );
+    UCI_broadcast( runtimeSetup, "uciok" );
 }
 
 void UCI_quit( struct UCIConfiguration* self )

@@ -6,38 +6,17 @@
 
 #include "UCI.h"
 
+#include "RuntimeSetup.h"
 #include "Utility.h"
 
 #define BUFFER_SIZE 4096
-
-#define LOG( file, color, level, ... )           \
-{                                                \
-    if ( file == stderr )                        \
-    {                                            \
-        fprintf( file, "%s%s: ", color, level ); \
-        fprintf( file, __VA_ARGS__ );            \
-        fprintf( file, "\033[0m\n" );            \
-    }                                            \
-    else                                         \
-    {                                            \
-        fprintf( file, "%s: ", level );          \
-        fprintf( file, __VA_ARGS__ );            \
-        fprintf( file, "\n" );                   \
-    }                                            \
-    fflush( file );                              \
-}
-
-#define DEBUG( file, ... )  LOG( file, "\x1B[36m", "DEBUG", __VA_ARGS__ ) 
-#define ERROR( file, ... )  LOG( file, "\x1B[31m", "ERROR", __VA_ARGS__ ) 
 
 int main( int argc, char** argv )
 {
     printf( "CChess\n" );
 
     // Configure from command line args
-    FILE* input = stdin;
-    FILE* output = stdout;
-    FILE* logfile = stderr;
+    struct RuntimeSetup runtimeSetup = RuntimeSetup_create();
 
     errno_t err = 0;
     for ( int loop = 1; loop < argc && !err; loop++ )
@@ -46,19 +25,16 @@ int main( int argc, char** argv )
         {
             if ( loop + 1 < argc )
             {
-                err = fopen_s( &input, argv[ ++loop ], "r" );
+                err = RuntimeSetup_setInput( &runtimeSetup, argv[ ++loop ] );
                 if ( err != 0 )
                 {
-                    // Reset the setting to something meaningful
-                    input = stdin;
-
                     // Report the problem
-                    ERROR( logfile, "Failed to open input file: %s (reason %d)", argv[ loop ], err );
+                    LOG_ERROR( runtimeSetup.logger, "Failed to open input file: %s (reason %d)", argv[ loop ], err );
                 }
             }
             else
             {
-                ERROR( logfile, "Missing input filename" );
+                LOG_ERROR( runtimeSetup.logger, "Missing input filename" );
                 err = EINVAL;
             }
         }
@@ -66,20 +42,17 @@ int main( int argc, char** argv )
         {
             if ( loop + 1 < argc )
             {
-                err = fopen_s( &output, argv[ ++loop ], "w" );
+                err = RuntimeSetup_setOutput( &runtimeSetup, argv[ ++loop ] );
                 if ( err != 0 )
                 {
-                    // Reset the setting to something meaningful
-                    output = stdout;
-
                     // Report the problem
-                    ERROR( logfile, "Failed to open output file: %s (reason %d)", argv[ loop ], err );
+                    LOG_ERROR( runtimeSetup.logger, "Failed to open output file: %s (reason %d)", argv[ loop ], err );
                     err = EINVAL;
                 }
             }
             else
             {
-                ERROR( logfile, "Missing output filename" );
+                LOG_ERROR( runtimeSetup.logger, "Missing output filename" );
                 err = EINVAL;
             }
         }
@@ -87,26 +60,23 @@ int main( int argc, char** argv )
         {
             if ( loop + 1 < argc )
             {
-                err = fopen_s( &logfile, argv[ ++loop ], "w" );
+                err = RuntimeSetup_setLogger( &runtimeSetup, argv[ ++loop ] );
                 if ( err != 0 )
                 {
-                    // Reset the setting to something meaningful
-                    logfile = stderr;
-
                     // Report the problem
-                    ERROR( logfile, "Failed to open log file: %s (reason %d)", argv[ loop ], err );
+                    LOG_ERROR( runtimeSetup.logger, "Failed to open log file: %s (reason %d)", argv[ loop ], err );
                     err = EINVAL;
                 }
             }
             else
             {
-                ERROR( logfile, "Missing log filename" );
+                LOG_ERROR( runtimeSetup.logger, "Missing log filename" );
                 err = EINVAL;
             }
         }
         else
         {
-            ERROR( logfile, "Unrecognised argument: %s", argv[ loop ] );
+            LOG_ERROR( runtimeSetup.logger, "Unrecognised argument: %s", argv[ loop ] );
             err = EINVAL;
         }
     }
@@ -118,12 +88,11 @@ int main( int argc, char** argv )
         // Process input
         char buffer[ BUFFER_SIZE ];
         char* line;
-        memset( buffer, 0, BUFFER_SIZE );
-        while ( fgets( buffer, sizeof( buffer ), input ) )
+        while ( RuntimeSetup_getline( &runtimeSetup, buffer, sizeof( buffer ) ) )
         {
             line = sanitize( buffer );
 
-            DEBUG( logfile, "> %s", line );
+            LOG_DEBUG( runtimeSetup.logger, "> %s", line );
 
             // Ignore empty lines and comments
             if ( strlen( line ) == 0 || line[ 0 ] == '#' )
@@ -133,8 +102,7 @@ int main( int argc, char** argv )
 
             if ( strcmp( line, "uci" ) == 0 )
             {
-                UCI_uci( &uci, output );
-                break;
+                UCI_uci( &uci, &runtimeSetup );
             }
             else if ( strcmp( line, "quit" ) == 0 )
             {
@@ -144,7 +112,7 @@ int main( int argc, char** argv )
             else
             {
                 // Ignore any unknown commands
-                ERROR( logfile, "Unrecognised input: %s", line );
+                LOG_ERROR( runtimeSetup.logger, "Unrecognised input: %s", line );
             }
         }
 
@@ -152,21 +120,7 @@ int main( int argc, char** argv )
     }
 
     // Shutdown
-
-    if ( input != stdin )
-    {
-        fclose( input );
-    }
-
-    if ( output != stdin )
-    {
-        fclose( output );
-    }
-
-    if ( logfile != stderr )
-    {
-        fclose( logfile );
-    }
+    RuntimeSetup_close( &runtimeSetup );
 
     return err;
 }
