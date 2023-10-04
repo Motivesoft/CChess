@@ -3,8 +3,6 @@
 
 #include "stdafx.h"
 #include <fcntl.h> 
-#include <stdio.h> 
-#include <string.h>
 
 #include "UCI.h"
 
@@ -41,14 +39,14 @@ int main( int argc, char** argv )
     FILE* output = stdout;
     FILE* logfile = stderr;
 
-    bool error = false;
-    for ( int loop = 1; loop < argc && !error; loop++ )
+    errno_t err = 0;
+    for ( int loop = 1; loop < argc && !err; loop++ )
     {
         if ( strcmp( argv[ loop ], "-input" ) == 0 )
         {
             if ( loop + 1 < argc )
             {
-                errno_t err = fopen_s( &input, argv[ ++loop ], "r" );
+                err = fopen_s( &input, argv[ ++loop ], "r" );
                 if ( err != 0 )
                 {
                     // Reset the setting to something meaningful
@@ -56,41 +54,19 @@ int main( int argc, char** argv )
 
                     // Report the problem
                     ERROR( logfile, "Failed to open input file: %s (reason %d)", argv[ loop ], err );
-                    error = true;
                 }
             }
             else
             {
                 ERROR( logfile, "Missing input filename" );
-                error = true;
-            }
-        }
-        else if ( strcmp( argv[ loop ], "-logfile" ) == 0 )
-        {
-            if ( loop + 1 < argc )
-            {
-                errno_t err = fopen_s( &logfile, argv[ ++loop ], "w" );
-                if ( err != 0 )
-                {
-                    // Reset the setting to something meaningful
-                    logfile = stderr;
-
-                    // Report the problem
-                    ERROR( logfile, "Failed to open log file: %s (reason %d)", argv[ loop ], err );
-                    error = true;
-                }
-            }
-            else
-            {
-                ERROR( logfile, "Missing log filename" );
-                error = true;
+                err = EINVAL;
             }
         }
         else if ( strcmp( argv[ loop ], "-output" ) == 0 )
         {
             if ( loop + 1 < argc )
             {
-                errno_t err = fopen_s( &output, argv[ ++loop ], "w" );
+                err = fopen_s( &output, argv[ ++loop ], "w" );
                 if ( err != 0 )
                 {
                     // Reset the setting to something meaningful
@@ -98,23 +74,44 @@ int main( int argc, char** argv )
 
                     // Report the problem
                     ERROR( logfile, "Failed to open output file: %s (reason %d)", argv[ loop ], err );
-                    error = true;
+                    err = EINVAL;
                 }
             }
             else
             {
                 ERROR( logfile, "Missing output filename" );
-                error = true;
+                err = EINVAL;
+            }
+        }
+        else if ( strcmp( argv[ loop ], "-logfile" ) == 0 )
+        {
+            if ( loop + 1 < argc )
+            {
+                err = fopen_s( &logfile, argv[ ++loop ], "w" );
+                if ( err != 0 )
+                {
+                    // Reset the setting to something meaningful
+                    logfile = stderr;
+
+                    // Report the problem
+                    ERROR( logfile, "Failed to open log file: %s (reason %d)", argv[ loop ], err );
+                    err = EINVAL;
+                }
+            }
+            else
+            {
+                ERROR( logfile, "Missing log filename" );
+                err = EINVAL;
             }
         }
         else
         {
             ERROR( logfile, "Unrecognised argument: %s", argv[ loop ] );
-            error = true;
+            err = EINVAL;
         }
     }
 
-    if ( !error )
+    if ( !err )
     {
         struct UCIConfiguration uci = UCI_createUCIConfiguration();
 
@@ -134,11 +131,24 @@ int main( int argc, char** argv )
                 continue;
             }
 
-            if ( strcmp( line, "quit" ) == 0 )
+            if ( strcmp( line, "uci" ) == 0 )
             {
+                UCI_uci( &uci, output );
                 break;
             }
+            else if ( strcmp( line, "quit" ) == 0 )
+            {
+                UCI_quit( &uci );
+                break;
+            }
+            else
+            {
+                // Ignore any unknown commands
+                ERROR( logfile, "Unrecognised input: %s", line );
+            }
         }
+
+        UCI_shutdown( &uci );
     }
 
     // Shutdown
@@ -158,5 +168,5 @@ int main( int argc, char** argv )
         fclose( logfile );
     }
 
-    return error ? -1 : 0;
+    return err;
 }
