@@ -20,10 +20,16 @@ int main( int argc, char** argv )
 {
     printf( "CChess\n" );
 
+    errno_t err = 0;
+
     // Configure from command line args
     struct RuntimeSetup* runtimeSetup = RuntimeSetup_createRuntimeSetup();
+    if( runtimeSetup == NULL )
+    {
+        fprintf( stderr, "Failed to allocate memory for the runtime setup\n" );
+        return ENOMEM;
+    }
 
-    errno_t err = 0;
     for ( int loop = 1; loop < argc && !err; loop++ )
     {
         if ( strcmp( argv[ loop ], "-input" ) == 0 )
@@ -93,6 +99,11 @@ int main( int argc, char** argv )
     if ( !err )
     {
         struct UCIConfiguration* uci = UCI_createUCIConfiguration();
+        if ( uci == NULL )
+        {
+            fprintf( stderr, "Failed to allocate memory for the UCI interface\n" );
+            return ENOMEM;
+        }
 
         // Process input
         char buffer[ BUFFER_SIZE ];

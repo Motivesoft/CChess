@@ -11,31 +11,37 @@ struct RuntimeSetup* RuntimeSetup_createRuntimeSetup()
 {
     struct RuntimeSetup* runtimeSetup = malloc( sizeof( struct RuntimeSetup ) );
 
-    RuntimeSetup_resetInput( runtimeSetup );
-    RuntimeSetup_resetOutput( runtimeSetup );
-    RuntimeSetup_resetLogger( runtimeSetup );
+    if ( runtimeSetup )
+    {
+        RuntimeSetup_resetInput( runtimeSetup );
+        RuntimeSetup_resetOutput( runtimeSetup );
+        RuntimeSetup_resetLogger( runtimeSetup );
 
-    runtimeSetup->debug = false;
+        runtimeSetup->debug = false;
+    }
 
     return runtimeSetup;
 }
 
 void RuntimeSetup_shutdown( struct RuntimeSetup* self )
 {
-    if ( self->input != stdin )
+    if ( self != NULL )
     {
-        fclose( self->input );
-    }
-    if ( self->output != stdout )
-    {
-        fclose( self->output );
-    }
-    if ( self->logger != stderr )
-    {
-        fclose( self->logger );
-    }
+        if ( self->input != stdin )
+        {
+            fclose( self->input );
+        }
+        if ( self->output != stdout )
+        {
+            fclose( self->output );
+        }
+        if ( self->logger != stderr )
+        {
+            fclose( self->logger );
+        }
 
-    free( self );
+        free( self );
+    }
 }
 
 void RuntimeSetup_resetInput( struct RuntimeSetup* self )

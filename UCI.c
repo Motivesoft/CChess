@@ -28,15 +28,21 @@ struct UCIConfiguration* UCI_createUCIConfiguration()
 {
     struct UCIConfiguration* uci = malloc( sizeof( struct UCIConfiguration ) );
 
-    // Starting position
-    uci->fen = STARTPOS;
+    if ( uci != NULL )
+    {
+        // Starting position
+        uci->fen = STARTPOS;
+    }
 
     return uci;
 }
 
 void UCI_shutdown( struct UCIConfiguration* self )
 {
-    free( self );
+    if ( self != NULL )
+    {
+        free( self );
+    }
 }
 
 // UCI interface
