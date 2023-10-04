@@ -92,10 +92,10 @@ errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename 
     return err;
 }
 
-char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, size_t bufferSize )
+char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferSize )
 {
     memset( buffer, 0, bufferSize );
-    return fgets( buffer, sizeof( buffer ), self->input );
+    return fgets( buffer, bufferSize, self->input );
 }
 
 void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... )

@@ -61,15 +61,19 @@ bool spliterate( char* line, char** command, char** arguments )
 {
     bool result = false;
 
+    // Make sure the line is trimmed and contains no double spaces, tabs etc
+    line = sanitize( line );
+
+    // By default, expect command to be all of line, and arguments to be zero-length (pointing to the null at the end)
     *command = line;
-    *arguments = line;
+    *arguments = line + strlen( line );
 
     for ( int loop = 0; loop < strlen( line ); loop++ )
     {
         if ( isspace( line[ loop ] ) )
         {
             line[ loop ] = '\0';
-            *arguments += loop + 1;
+            *arguments = &line[ loop + 1 ];
 
             result = true;
             break;

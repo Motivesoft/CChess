@@ -90,34 +90,35 @@ int main( int argc, char** argv )
 
         // Process input
         char buffer[ BUFFER_SIZE ];
-        char* line;
-        while ( RuntimeSetup_getline( &runtimeSetup, buffer, sizeof( buffer ) ) )
+        while ( RuntimeSetup_getline( &runtimeSetup, buffer, BUFFER_SIZE ) )
         {
-            line = sanitize( buffer );
-
-            LOG_DEBUG( "Processing input: [%s]", line );
+            char* command;
+            char* arguments;
+            spliterate( buffer, &command, &arguments );
 
             // Ignore empty lines and comments
-            if ( strlen( line ) == 0 || line[ 0 ] == '#' )
+            if ( strlen( command ) == 0 || command[ 0 ] == '#' )
             {
                 continue;
             }
 
+            LOG_DEBUG( "Processing input: [%s][%s]", command, arguments );
+
             // line now consists of a keyword (command) and (potentially) one or more arguments
             // split for processing
-            if ( strcmp( line, "uci" ) == 0 )
+            if ( strcmp( command, "uci" ) == 0 )
             {
-                UCI_uci( &uci, &runtimeSetup );
+                UCI_uci( &uci, &runtimeSetup, arguments );
             }
-            else if ( strcmp( line, "quit" ) == 0 )
+            else if ( strcmp( command, "quit" ) == 0 )
             {
-                UCI_quit( &uci, &runtimeSetup );
+                UCI_quit( &uci, &runtimeSetup, arguments );
                 break;
             }
             else
             {
                 // Ignore any unknown commands
-                LOG_ERROR( "Unrecognised input: %s", line );
+                LOG_ERROR( "Unrecognised input: %s", command );
             }
         }
 

@@ -32,7 +32,7 @@ errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename 
 
 // Helper methods
 
-char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, size_t bufferSize );
+char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferSize );
 
 enum LogLevel
 {
