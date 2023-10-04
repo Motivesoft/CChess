@@ -12,6 +12,26 @@
 
 #define BUFFER_SIZE 4096
 
+#define LOG( file, color, level, ... )           \
+{                                                \
+    if ( file == stderr )                        \
+    {                                            \
+        fprintf( file, "%s%s: ", color, level ); \
+        fprintf( file, __VA_ARGS__ );            \
+        fprintf( file, "\033[0m\n" );            \
+    }                                            \
+    else                                         \
+    {                                            \
+        fprintf( file, "%s: ", level );          \
+        fprintf( file, __VA_ARGS__ );            \
+        fprintf( file, "\n" );                   \
+    }                                            \
+    fflush( file );                              \
+}
+
+#define DEBUG( file, ... )  LOG( file, "\x1B[36m", "DEBUG", __VA_ARGS__ ) 
+#define ERROR( file, ... )  LOG( file, "\x1B[31m", "ERROR", __VA_ARGS__ ) 
+
 int main( int argc, char** argv )
 {
     printf( "CChess\n" );
@@ -31,18 +51,66 @@ int main( int argc, char** argv )
                 errno_t err = fopen_s( &input, argv[ ++loop ], "r" );
                 if ( err != 0 )
                 {
-                    fprintf( logfile, "Failed to open input file: %s (reason %d)", argv[ loop ], err );
-                    error = true;
-
                     // Reset the setting to something meaningful
                     input = stdin;
+
+                    // Report the problem
+                    ERROR( logfile, "Failed to open input file: %s (reason %d)", argv[ loop ], err );
+                    error = true;
                 }
             }
             else
             {
-                fprintf( logfile, "Missing input filename" );
+                ERROR( logfile, "Missing input filename" );
                 error = true;
             }
+        }
+        else if ( strcmp( argv[ loop ], "-logfile" ) == 0 )
+        {
+            if ( loop + 1 < argc )
+            {
+                errno_t err = fopen_s( &logfile, argv[ ++loop ], "w" );
+                if ( err != 0 )
+                {
+                    // Reset the setting to something meaningful
+                    logfile = stderr;
+
+                    // Report the problem
+                    ERROR( logfile, "Failed to open log file: %s (reason %d)", argv[ loop ], err );
+                    error = true;
+                }
+            }
+            else
+            {
+                ERROR( logfile, "Missing log filename" );
+                error = true;
+            }
+        }
+        else if ( strcmp( argv[ loop ], "-output" ) == 0 )
+        {
+            if ( loop + 1 < argc )
+            {
+                errno_t err = fopen_s( &output, argv[ ++loop ], "w" );
+                if ( err != 0 )
+                {
+                    // Reset the setting to something meaningful
+                    output = stdout;
+
+                    // Report the problem
+                    ERROR( logfile, "Failed to open output file: %s (reason %d)", argv[ loop ], err );
+                    error = true;
+                }
+            }
+            else
+            {
+                ERROR( logfile, "Missing output filename" );
+                error = true;
+            }
+        }
+        else
+        {
+            ERROR( logfile, "Unrecognised argument: %s", argv[ loop ] );
+            error = true;
         }
     }
 
@@ -57,6 +125,8 @@ int main( int argc, char** argv )
         while ( fgets( buffer, sizeof( buffer ), input ) )
         {
             line = sanitize( buffer );
+
+            DEBUG( logfile, "> %s", line );
 
             // Ignore empty lines and comments
             if ( strlen( line ) == 0 || line[ 0 ] == '#' )
