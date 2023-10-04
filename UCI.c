@@ -1,13 +1,16 @@
 #include "stdafx.h"
 
+#include "Perft.h"
 #include "UCI.h"
 
-// Intrnal methods
+// Internal methods
 
 #define LOG_DEBUG( ... ) { log( runtimeSetup, DEBUG, __VA_ARGS__ ); }
 #define LOG_INFO( ... ) { log( runtimeSetup, INFO, __VA_ARGS__ ); }
 #define LOG_WARN( ... ) { log( runtimeSetup, WARN, __VA_ARGS__ ); }
 #define LOG_ERROR( ... ) { log( runtimeSetup, ERROR, __VA_ARGS__ ); }
+
+static const char* STARTPOS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 void UCI_broadcast( struct RuntimeSetup* runtimeSetup, const char* format, ... )
 {
@@ -26,7 +29,7 @@ struct UCIConfiguration UCI_createUCIConfiguration()
     struct UCIConfiguration uci;
 
     // Starting position
-    uci.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    uci.fen = STARTPOS;
 
     return uci;
 }
@@ -191,15 +194,16 @@ bool UCI_perft( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup
 
     if ( strcmp( keyword, "file" ) == 0 )
     {
-
+        Perft_file( runtimeSetup, remainder );
     }
     if ( strcmp( keyword, "fen" ) == 0 )
     {
-
+        Perft_fen( runtimeSetup, remainder );
     }
     else // Assume depth and optional fen
     {
-
+        int depth = atoi( keyword );
+        Perft_depth( runtimeSetup, depth, strlen( remainder ) > 0 ? remainder : STARTPOS );
     }
 
     return false;

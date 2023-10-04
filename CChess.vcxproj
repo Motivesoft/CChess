@@ -140,11 +140,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CChess.c" />
+    <ClCompile Include="Perft.c" />
     <ClCompile Include="RuntimeSetup.c" />
     <ClCompile Include="UCI.c" />
     <ClCompile Include="Utility.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Perft.h" />
     <ClInclude Include="RuntimeSetup.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="UCI.h" />

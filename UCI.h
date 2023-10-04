@@ -5,8 +5,8 @@
 
 struct UCIConfiguration
 {
-    char* fen;
-} UCIConfiguration;
+    const char* fen;
+};
 
 // Control methods
 

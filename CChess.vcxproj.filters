@@ -27,6 +27,9 @@
     <ClCompile Include="RuntimeSetup.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Perft.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -39,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RuntimeSetup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Perft.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
