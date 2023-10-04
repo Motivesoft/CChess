@@ -109,7 +109,7 @@ int main( int argc, char** argv )
             }
             else if ( strcmp( line, "quit" ) == 0 )
             {
-                UCI_quit( &uci );
+                UCI_quit( &uci, &runtimeSetup );
                 break;
             }
             else

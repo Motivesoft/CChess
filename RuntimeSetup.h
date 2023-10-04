@@ -11,7 +11,7 @@ struct RuntimeSetup
 
 // Control methods
 
-struct RuntimeSetup RuntimeSetup_create();
+struct RuntimeSetup RuntimeSetup_createRuntimeSetup();
 void RuntimeSetup_close( struct RuntimeSetup* self );
 
 // Internal methods
