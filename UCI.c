@@ -54,6 +54,8 @@ struct UciCommandHandler uciCommandHandlers[] =
     { "stop", UCI_stop },
     { "ponderhit", UCI_ponderhit },
     { "quit", UCI_quit },
+    { "perft", UCI_perft },
+    { "test", UCI_test },
     { NULL, NULL }
 };
 
@@ -196,7 +198,7 @@ bool UCI_perft( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup
     {
         Perft_file( runtimeSetup, remainder );
     }
-    if ( strcmp( keyword, "fen" ) == 0 )
+    else if ( strcmp( keyword, "fen" ) == 0 )
     {
         Perft_fen( runtimeSetup, remainder );
     }
@@ -206,12 +208,12 @@ bool UCI_perft( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup
         Perft_depth( runtimeSetup, depth, strlen( remainder ) > 0 ? remainder : STARTPOS );
     }
 
-    return false;
+    return true;
 }
 
 bool UCI_test( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup, char* arguments )
 {
     LOG_DEBUG( "Processing test command" );
 
-    return false;
+    return true;
 }
