@@ -11,6 +11,9 @@
 
 #define BUFFER_SIZE 4096
 
+#define LOG_DEBUG( ... ) { log( &runtimeSetup, DEBUG, __VA_ARGS__ ); }
+#define LOG_ERROR( ... ) { log( &runtimeSetup, ERROR, __VA_ARGS__ ); }
+
 int main( int argc, char** argv )
 {
     printf( "CChess\n" );
@@ -29,12 +32,12 @@ int main( int argc, char** argv )
                 if ( err != 0 )
                 {
                     // Report the problem
-                    LOG_ERROR( runtimeSetup.logger, "Failed to open input file: %s (reason %d)", argv[ loop ], err );
+                    LOG_ERROR( "Failed to open input file: %s (reason %d)", argv[ loop ], err );
                 }
             }
             else
             {
-                LOG_ERROR( runtimeSetup.logger, "Missing input filename" );
+                LOG_ERROR( "Missing input filename" );
                 err = EINVAL;
             }
         }
@@ -46,13 +49,13 @@ int main( int argc, char** argv )
                 if ( err != 0 )
                 {
                     // Report the problem
-                    LOG_ERROR( runtimeSetup.logger, "Failed to open output file: %s (reason %d)", argv[ loop ], err );
+                    LOG_ERROR( "Failed to open output file: %s (reason %d)", argv[ loop ], err );
                     err = EINVAL;
                 }
             }
             else
             {
-                LOG_ERROR( runtimeSetup.logger, "Missing output filename" );
+                LOG_ERROR( "Missing output filename" );
                 err = EINVAL;
             }
         }
@@ -64,19 +67,19 @@ int main( int argc, char** argv )
                 if ( err != 0 )
                 {
                     // Report the problem
-                    LOG_ERROR( runtimeSetup.logger, "Failed to open log file: %s (reason %d)", argv[ loop ], err );
+                    LOG_ERROR( "Failed to open log file: %s (reason %d)", argv[ loop ], err );
                     err = EINVAL;
                 }
             }
             else
             {
-                LOG_ERROR( runtimeSetup.logger, "Missing log filename" );
+                LOG_ERROR( "Missing log filename" );
                 err = EINVAL;
             }
         }
         else
         {
-            LOG_ERROR( runtimeSetup.logger, "Unrecognised argument: %s", argv[ loop ] );
+            LOG_ERROR( "Unrecognised argument: %s", argv[ loop ] );
             err = EINVAL;
         }
     }
@@ -92,7 +95,7 @@ int main( int argc, char** argv )
         {
             line = sanitize( buffer );
 
-            LOG_DEBUG( runtimeSetup.logger, "> %s", line );
+            LOG_DEBUG( "Processing input: [%s]", line );
 
             // Ignore empty lines and comments
             if ( strlen( line ) == 0 || line[ 0 ] == '#' )
@@ -112,7 +115,7 @@ int main( int argc, char** argv )
             else
             {
                 // Ignore any unknown commands
-                LOG_ERROR( runtimeSetup.logger, "Unrecognised input: %s", line );
+                LOG_ERROR( "Unrecognised input: %s", line );
             }
         }
 

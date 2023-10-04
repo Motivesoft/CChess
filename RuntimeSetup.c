@@ -97,3 +97,32 @@ char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, size_t buff
     memset( buffer, 0, bufferSize );
     return fgets( buffer, sizeof( buffer ), self->input );
 }
+
+void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... )
+{
+    static const char* label[] = { "DEBUG","ERROR" };
+    static const char* color[] = { "\x1B[36m","\x1B[31m" };
+
+    va_list args;
+    va_start( args, format );
+
+    if ( self->logger == stderr )
+    {
+        fprintf( self->logger, "%s%s: ", color[ level ], label[ level ] );
+
+        vfprintf( self->logger, format, args );
+        fprintf( self->logger, "\033[0m\n" );
+    }
+    else
+    {
+        fprintf( self->logger, "%s: ", label[ level ] );
+        vfprintf( self->logger, format, args );
+        fprintf( self->logger, "\n" );
+    }
+    fflush( self->logger );
+
+    va_end( args );
+}
+
+#define LOG_DEBUG( runtimeSetup, ... )  LOG( runtimeSetup, "\x1B[36m", "DEBUG", __VA_ARGS__ ) 
+#define LOG_ERROR( runtimeSetup, ... )  LOG( runtimeSetup, "\x1B[31m", "ERROR", __VA_ARGS__ ) 

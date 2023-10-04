@@ -33,3 +33,11 @@ errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename 
 // Helper methods
 
 char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, size_t bufferSize );
+
+enum LogLevel
+{
+    DEBUG,
+    ERROR
+};
+
+void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... );
