@@ -13,11 +13,24 @@
 void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen )
 {
     LOG_DEBUG( "perft with depth %d and FEN: %s", depth, fen );
+
+    // TODO
+    // Board* = Board_create( fen );
+    // unsigned long count = Perft_loop( board, depth, true );
+    // print( count )
 }
 
 void Perft_fen( struct RuntimeSetup* runtimeSetup, const char* fenWithResults )
 {
     LOG_DEBUG( "perft with FEN: %s", fenWithResults );
+
+    // TODO
+    // Split expected results from fen
+    // Board* = Board_create( fen );
+    // for each expected result
+    //   unsigned long count = Perft_loop( board, depth, true );
+    //   if( count != expected ) panic 
+    //   else print count
 }
 
 void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
