@@ -15,9 +15,16 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
     LOG_DEBUG( "perft with depth %d and FEN: %s", depth, fen );
 
     // TODO
-    // Board* = Board_create( fen );
-    // unsigned long count = Perft_loop( board, depth, true );
-    // print( count )
+    struct Board* board = Board_create( fen );
+
+    if ( board == NULL )
+    {
+        LOG_ERROR( "Cannot allocate memory for perft test" );
+        return;
+    }
+    
+    unsigned long count = Perft_loop( board, depth, true );
+    fprintf( runtimeSetup->logger, "Move count: %u", count );
 }
 
 void Perft_fen( struct RuntimeSetup* runtimeSetup, const char* fenWithResults )
@@ -62,4 +69,9 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
     {
         LOG_ERROR( "Failed to open file: %s (reason %d)", filename, err );
     }
+}
+
+unsigned long Perft_loop( struct Board* board, int depth, bool divide )
+{
+    return 1;
 }

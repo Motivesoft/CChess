@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Board.c" />
     <ClCompile Include="CChess.c" />
     <ClCompile Include="Perft.c" />
     <ClCompile Include="RuntimeSetup.c" />
@@ -146,6 +147,7 @@
     <ClCompile Include="Utility.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Board.h" />
     <ClInclude Include="Perft.h" />
     <ClInclude Include="RuntimeSetup.h" />
     <ClInclude Include="stdafx.h" />
