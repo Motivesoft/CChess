@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Move.h"
+
 /// <summary>
 /// Represents each piece, with some padding so that WHITE_x and BLACK_x differ only in the msb
 /// </summary>
@@ -48,7 +50,7 @@ struct Board
 };
 
 struct Board* Board_create( const char* fen );
-void Board_shutdown( struct Board* self );
+void Board_destroy( struct Board* self );
 
 // Internal methods
 
@@ -72,6 +74,8 @@ void Board_printBoard( struct Board* self );
 /// <param name="fen">the buffer to receive the FEN output</param>
 void Board_exportBoard( struct Board* self, char* fen );
 
+void Board_exportMove( struct Move* move, char* moveString );
+
 typedef void ( *FenProcessor )( struct Board* self, const char* fenSection );
 
 void Board_processBoardLayout( struct Board* self, const char* fenSection );
@@ -80,3 +84,16 @@ void Board_processCastlingRights( struct Board* self, const char* fenSection );
 void Board_processEnPassantSquare( struct Board* self, const char* fenSection );
 void Board_processHalfmoveClock( struct Board* self, const char* fenSection );
 void Board_processFullmoveNumber( struct Board* self, const char* fenSection );
+
+unsigned long rankFromIndex( unsigned long index );
+unsigned long fileFromIndex( unsigned long index );
+
+bool empty( struct Board* self, unsigned long index );
+bool friendly( struct Board* self, unsigned long index );
+bool attacker( struct Board* self, unsigned long index );
+
+struct MoveList* Board_generateMoves( struct Board* self );
+void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
+
+bool Board_makeMove( struct Board* self, struct Move* move );
+void Board_unmakeMove( struct Board* self );

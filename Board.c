@@ -7,6 +7,9 @@
 
 static const char pieceNames[] = " PNBRQK  pnbrqk ";
 
+// This is expected to be 0b00001000 but we should check
+static const char COLOR_BIT = BLACK_PAWN - WHITE_PAWN;
+
 struct Board* Board_create( const char* fen )
 {
     struct Board* board = malloc( sizeof( struct Board ) );
@@ -60,7 +63,7 @@ struct Board* Board_create( const char* fen )
     return board;
 }
 
-void Board_shutdown( struct Board* self )
+void Board_destroy( struct Board* self )
 {
     if ( self != NULL )
     {
@@ -379,16 +382,206 @@ void Board_exportBoard( struct Board* self, char* fen )
         fen[ fenIndex++ ] = '1' + ( ( self->enPassantSquare >> 3 ) & 0b00000111 );
     }
 
-    // Terminate the string here so we can ssprintf the remainder
+    // Terminate the string here so we can sprintf the remainder
     fen[ fenIndex ] = '\0';
 
     // Halfmove clock - printed in a slightly hinky way
 #define BUFFERSIZE 10
     char buffer[ BUFFERSIZE ];
-    sprintf_s( buffer, BUFFERSIZE, " %d", self->halfmoveClock);
+    sprintf_s( buffer, BUFFERSIZE, " %d", self->halfmoveClock );
     strcat_s( fen, strlen( fen ) + BUFFERSIZE, buffer );
 
     // Fullmove number - printed in a slightly hinky way
     sprintf_s( buffer, BUFFERSIZE, " %d", self->fullmoveNumber );
     strcat_s( fen, strlen( fen ) + BUFFERSIZE, buffer );
+}
+
+void Board_exportMove( struct Move* move, char* moveString )
+{
+    unsigned char index = 0;
+    moveString[ index++ ] = (char)('a' + Move_fromFile( move ) );
+    moveString[ index++ ] = (char)('1' + Move_fromRank( move ) );
+    moveString[ index++ ] = (char)('a' + Move_toFile( move ) );
+    moveString[ index++ ] = (char)('1' + Move_toRank( move ) );
+    if ( Move_isPromotion( move ) )
+    {
+        moveString[ index++ ] = pieceNames[ Move_promotion( move ) ];
+    }
+    moveString[ index ] = '\0';
+}
+
+struct MoveList* Board_generateMoves( struct Board* self )
+{
+    struct MoveList* moveList = MoveList_createMoveList();
+
+    Board_generatePawnMoves( self, moveList );
+
+    //for ( int rank = 0; rank < 8; rank++ )
+    //{
+    //    for ( int file = 0; file < 8; file++ )
+    //    {
+
+    //    }
+    //}
+
+    return moveList;
+}
+
+void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
+{
+    static const unsigned long whitePromotionPieces[] = { WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN };
+    static const unsigned long blackPromotionPieces[] = { BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN };
+
+    const struct PieceList* playerPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+
+    const unsigned long oneStep = self->whiteToMove ? +8 : -8;
+    const unsigned long twoStep = self->whiteToMove ? +16 : -16;
+    const unsigned long captureL = self->whiteToMove ? +7 : -9;
+    const unsigned long captureR = self->whiteToMove ? +9 : -7;
+
+    // From where can they move two squares forward
+    const unsigned long homeRank = self->whiteToMove ? 1 : 6;
+    const unsigned long promotionRank = self->whiteToMove ? 7 : 0;
+    const unsigned long *promotionPieces = self->whiteToMove ? whitePromotionPieces : blackPromotionPieces;
+
+    unsigned long long pieces = playerPieces->bbPawn;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        // Single move forward, no capture
+        // Pawns cannot be on 8th/1st rank (depending on color) due to promotion, so no need for edge detection for this
+        destination = index + oneStep;
+        if ( self->squares[ destination ] == EMPTY )
+        {
+            if ( rankFromIndex( destination ) == promotionRank )
+            {
+                for ( unsigned short loop = 0; loop < 4; loop++ )
+                {
+                    MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop] ) );
+                }
+            }
+            else
+            {
+                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+
+                // Those elible for a single step forward can maybe also do two steps
+                destination = index + twoStep;
+                if ( rankFromIndex( index ) == homeRank && self->squares[ destination ] == EMPTY )
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+
+        if ( fileFromIndex( index ) > 0 )
+        {
+            destination = index + captureL;
+            if ( destination == self->enPassantSquare )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+            }
+            else if ( attacker( self, destination ) )
+            {
+                if ( rankFromIndex( destination ) == promotionRank )
+                {
+                    for ( unsigned short loop = 0; loop < 4; loop++ )
+                    {
+                        MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
+                    }
+                }
+                else
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+
+        if ( fileFromIndex( index ) < 7 )
+        {
+            destination = index + captureR;
+            if ( destination == self->enPassantSquare )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+            }
+            else if ( attacker( self, destination ) )
+            {
+                if ( rankFromIndex( destination ) == promotionRank )
+                {
+                    for ( unsigned short loop = 0; loop < 4; loop++ )
+                    {
+                        MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
+                    }
+                }
+                else
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+unsigned long rankFromIndex( unsigned long index )
+{
+    return (index >> 3) & 0b00000111;
+}
+
+unsigned long fileFromIndex( unsigned long index )
+{
+    return index & 0b00000111;
+}
+
+bool empty( struct Board* self, unsigned long index )
+{
+    return self->squares[ index ] == EMPTY;
+}
+
+bool friendly( struct Board* self, unsigned long index )
+{
+    // Empty can look like a white piece if we don't explicitly check
+    if ( empty( self, index ) )
+    {
+        return false;
+    }
+
+    if ( self->whiteToMove )
+    {
+        return ( self->squares[ index ] & COLOR_BIT ) == 0;
+    }
+    else
+    {
+        return ( self->squares[ index ] & COLOR_BIT ) == COLOR_BIT;
+    }
+}
+
+bool attacker( struct Board* self, unsigned long index )
+{
+    // Empty can look like a white piece if we don't explicitly check
+    if ( empty( self, index ) )
+    {
+        return false;
+    }
+
+    if ( self->whiteToMove )
+    {
+        return ( self->squares[ index ] & COLOR_BIT ) == COLOR_BIT;
+    }
+    else
+    {
+        return ( self->squares[ index ] & COLOR_BIT ) == 0;
+    }
+}
+
+bool Board_makeMove( struct Board* self, struct Move* move )
+{
+    return true;
+}
+
+void Board_unmakeMove( struct Board* self )
+{
+
 }

@@ -23,7 +23,7 @@ struct RuntimeSetup* RuntimeSetup_createRuntimeSetup()
     return runtimeSetup;
 }
 
-void RuntimeSetup_shutdown( struct RuntimeSetup* self )
+void RuntimeSetup_destroy( struct RuntimeSetup* self )
 {
     if ( self != NULL )
     {

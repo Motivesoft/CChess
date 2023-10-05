@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="Board.c" />
     <ClCompile Include="CChess.c" />
+    <ClCompile Include="Move.c" />
     <ClCompile Include="Perft.c" />
     <ClCompile Include="RuntimeSetup.c" />
     <ClCompile Include="UCI.c" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Board.h" />
+    <ClInclude Include="Move.h" />
     <ClInclude Include="Perft.h" />
     <ClInclude Include="RuntimeSetup.h" />
     <ClInclude Include="stdafx.h" />

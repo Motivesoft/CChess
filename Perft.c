@@ -14,7 +14,6 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
 {
     LOG_DEBUG( "perft with depth %d and FEN: %s", depth, fen );
 
-    // TODO
     struct Board* board = Board_create( fen );
 
     if ( board == NULL )
@@ -73,15 +72,73 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
 
 unsigned long Perft_run( struct Board* board, int depth, bool divide )
 {
-    return divide ? Perft_loop( board, depth ) : Perft_divide( board, depth );
+    return divide ? Perft_divide( board, depth ) : Perft_loop( board, depth );
 }
 
 unsigned long Perft_loop( struct Board* board, int depth )
 {
-    return 1;
+    if ( depth == 0 )
+    {
+        return 1;
+    }
+
+    unsigned int nodes = 0;
+
+    struct MoveList* moveList = Board_generateMoves( board );
+
+    // This is a cheating optimisation
+    if ( depth == 1 )
+    {
+        return moveList->count;
+    }
+
+    for ( unsigned char loop = 0; loop < moveList->count; loop++ )
+    {
+        if ( Board_makeMove( board, moveList->moves[ loop ] ) )
+        {
+            nodes += Perft_loop( board, depth - 1 );
+        }
+
+        Board_unmakeMove( board );
+    }
+
+    MoveList_destroy( moveList );
+
+    return nodes;
 }
 
 unsigned long Perft_divide( struct Board* board, int depth )
 {
-    return 1;
+    if ( depth == 0 )
+    {
+        return 1;
+    }
+
+    unsigned int nodes = 0;
+    unsigned int divideNodes = 0;
+
+    char moveString[ 10 ];
+    char fenString[ 256 ];
+
+    struct MoveList* moveList = Board_generateMoves( board );
+
+    for ( unsigned char loop = 0; loop < moveList->count; loop++ )
+    {
+        if ( Board_makeMove( board, moveList->moves[ loop ] ) )
+        {
+            divideNodes = Perft_loop( board, depth - 1 );
+            nodes += divideNodes;
+
+            Board_exportMove( moveList->moves[ loop ], moveString );
+            Board_exportBoard( board, fenString );
+
+            printf( "  %s : %d - %s\n", moveString, divideNodes, fenString );
+        }
+
+        Board_unmakeMove( board );
+    }
+
+    MoveList_destroy( moveList );
+
+    return nodes;
 }

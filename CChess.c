@@ -128,11 +128,11 @@ int main( int argc, char** argv )
             }
         }
 
-        UCI_shutdown( uci );
+        UCI_destroy( uci );
     }
 
     // Shutdown
-    RuntimeSetup_shutdown( runtimeSetup );
+    RuntimeSetup_destroy( runtimeSetup );
 
     return err;
 }

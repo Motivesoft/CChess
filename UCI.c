@@ -37,7 +37,7 @@ struct UCIConfiguration* UCI_createUCIConfiguration()
     return uci;
 }
 
-void UCI_shutdown( struct UCIConfiguration* self )
+void UCI_destroy( struct UCIConfiguration* self )
 {
     if ( self != NULL )
     {

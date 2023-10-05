@@ -12,7 +12,7 @@ struct RuntimeSetup
 // Control methods
 
 struct RuntimeSetup* RuntimeSetup_createRuntimeSetup();
-void RuntimeSetup_shutdown( struct RuntimeSetup* self );
+void RuntimeSetup_destroy( struct RuntimeSetup* self );
 
 // Internal methods
 
