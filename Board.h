@@ -88,12 +88,45 @@ void Board_processFullmoveNumber( struct Board* self, const char* fenSection );
 unsigned long rankFromIndex( unsigned long index );
 unsigned long fileFromIndex( unsigned long index );
 
+
+/// <summary>
+/// Is the square at index empty?
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="index">the location</param>
 bool empty( struct Board* self, unsigned long index );
+
+/// <summary>
+/// Is the piece at index a friendly piece?
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="index">the location</param>
 bool friendly( struct Board* self, unsigned long index );
+
+/// <summary>
+/// Is the piece at index an attacker?
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="index">the location</param>
 bool attacker( struct Board* self, unsigned long index );
 
+/// <summary>
+/// Generate the pseudolegal moves for the current position
+/// </summary>
+/// <param name="self">the board</param>
 struct MoveList* Board_generateMoves( struct Board* self );
-void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
 
+/// <summary>
+/// Makes a move but returns false if the move is illegal
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="move">the pseudolegal move</param>
 bool Board_makeMove( struct Board* self, struct Move* move );
+
+/// <summary>
+/// Reverts the board state
+/// </summary>
+/// <param name="self">the board</param>
 void Board_unmakeMove( struct Board* self );
+
+void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
