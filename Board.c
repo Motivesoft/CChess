@@ -112,26 +112,32 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
             {
                 case 'P':
                     self->whitePieces.bbPawn |= (1ull << index);
+                    self->squares[ index ] = WHITE_PAWN;
                     break;
 
                 case 'N':
                     self->whitePieces.bbKnight |= (1ull << index);
+                    self->squares[ index ] = WHITE_KNIGHT;
                     break;
 
                 case 'B':
                     self->whitePieces.bbBishop |= (1ull << index);
+                    self->squares[ index ] = WHITE_BISHOP;
                     break;
 
                 case 'R':
                     self->whitePieces.bbRook |= (1ull << index);
+                    self->squares[ index ] = WHITE_ROOK;
                     break;
 
                 case 'Q':
                     self->whitePieces.bbQueen |= (1ull << index);
+                    self->squares[ index ] = WHITE_QUEEN;
                     break;
 
                 case 'K':
                     self->whitePieces.bbKing |= (1ull << index);
+                    self->squares[ index ] = WHITE_KING;
                     self->whitePieces.king = index;
                     break;
 
