@@ -3,7 +3,9 @@
 #include "Board.h"
 #include "Utility.h"
 
-#define OFF_BOARD -1
+#define OFF_BOARD UCHAR_MAX
+
+static const char pieceNames[] = " PNBRQK  pnbrqk ";
 
 struct Board* Board_create( const char* fen )
 {
@@ -49,7 +51,12 @@ struct Board* Board_create( const char* fen )
 
         free( fenCopy );
     }
+
     Board_printBoard( board );
+    char x[ 256 ];
+    Board_exportBoard( board, x );
+    printf( "%s\n", x );
+
     return board;
 }
 
@@ -261,13 +268,12 @@ void Board_processFullmoveNumber( struct Board* self, const char* fenSection )
 
 void Board_printBoard( struct Board* self )
 {
-    static const char pieceNames[] = " PNBRQKpnbrqk";
     printf( "     A   B   C   D   E   F   G   H \n" );
     printf( "   +---+---+---+---+---+---+---+---+\n" );
-    for ( char rank = 8; rank > 0; rank-- )
+    for ( unsigned char rank = 8; rank > 0; rank-- )
     {
         printf( " %d |", rank );
-        for ( char file = 1; file <= 8; file++ )
+        for ( unsigned char file = 1; file <= 8; file++ )
         {
             unsigned char item = self->squares[ ((rank-1)<<3)+(file-1) ];
             unsigned char piece = pieceNames[ item ];
@@ -291,4 +297,98 @@ void Board_printBoard( struct Board* self )
         printf( "   +---+---+---+---+---+---+---+---+\n" );
     }
     printf( "     A   B   C   D   E   F   G   H \n" );
+}
+
+void Board_exportBoard( struct Board* self, char* fen )
+{
+    int fenIndex = 0;
+    for ( unsigned char rank = 8; rank > 0; rank-- )
+    {
+        if ( fenIndex > 0 )
+        {
+            fen[ fenIndex++ ] = '/';
+        }
+
+        int empty = 0;
+        for ( unsigned char file = 1; file <= 8; file++ )
+        {
+            unsigned char item = self->squares[ ( ( rank - 1 ) << 3 ) + ( file - 1 ) ];
+
+            if ( item == EMPTY )
+            {
+                empty++;
+            }
+            else
+            {
+                if ( empty > 0 )
+                {
+                    fen[ fenIndex++ ] = '0' + empty;
+                    empty = 0;
+                }
+
+                fen[ fenIndex++ ] = pieceNames[ item ];
+            }
+        }
+
+        if ( empty > 0 )
+        {
+            fen[ fenIndex++ ] = '0' + empty;
+            empty = 0;
+        }
+    }
+
+    // Active color
+    fen[ fenIndex++ ] = ' ';
+    fen[ fenIndex++ ] = self->whiteToMove ? 'w' : 'b';
+
+    // Castling rights
+    fen[ fenIndex++ ] = ' ';
+    if ( self->whitePieces.kingsideCastling || self->whitePieces.queensideCastling || self->blackPieces.kingsideCastling || self->blackPieces.queensideCastling )
+    {
+        if ( self->whitePieces.kingsideCastling )
+        {
+            fen[ fenIndex++ ] = 'K';
+        }
+        if ( self->whitePieces.queensideCastling )
+        {
+            fen[ fenIndex++ ] = 'Q';
+        }
+        if ( self->blackPieces.kingsideCastling )
+        {
+            fen[ fenIndex++ ] = 'k';
+        }
+        if ( self->blackPieces.queensideCastling )
+        {
+            fen[ fenIndex++ ] = 'q';
+        }
+    }
+    else
+    {
+        fen[ fenIndex++ ] = '-';
+    }
+
+    // En passant
+    fen[ fenIndex++ ] = ' ';
+    if ( self->enPassantSquare == OFF_BOARD )
+    {
+        fen[ fenIndex++ ] = '-';
+    }
+    else
+    {
+        fen[ fenIndex++ ] = 'a' + ( self->enPassantSquare & 0b00000111 );
+        fen[ fenIndex++ ] = '1' + ( ( self->enPassantSquare >> 3 ) & 0b00000111 );
+    }
+
+    // Terminate the string here so we can ssprintf the remainder
+    fen[ fenIndex ] = '\0';
+
+    // Halfmove clock - printed in a slightly hinky way
+#define BUFFERSIZE 10
+    char buffer[ BUFFERSIZE ];
+    sprintf_s( buffer, BUFFERSIZE, " %d", self->halfmoveClock);
+    strcat_s( fen, strlen( fen ) + BUFFERSIZE, buffer );
+
+    // Fullmove number - printed in a slightly hinky way
+    sprintf_s( buffer, BUFFERSIZE, " %d", self->fullmoveNumber );
+    strcat_s( fen, strlen( fen ) + BUFFERSIZE, buffer );
 }

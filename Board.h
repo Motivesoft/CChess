@@ -1,5 +1,8 @@
 #pragma once
 
+/// <summary>
+/// Represents each piece, with some padding so that WHITE_x and BLACK_x differ only in the msb
+/// </summary>
 enum Piece
 {
     EMPTY = 0,
@@ -9,12 +12,15 @@ enum Piece
     WHITE_ROOK,
     WHITE_QUEEN,
     WHITE_KING,
+    UNUSED_1,
+    UNUSED_2,
     BLACK_PAWN,
     BLACK_KNIGHT,
     BLACK_BISHOP,
     BLACK_ROOK,
     BLACK_QUEEN,
     BLACK_KING,
+    UNUSED_3,
 };
 
 struct PieceList
@@ -46,8 +52,25 @@ void Board_shutdown( struct Board* self );
 
 // Internal methods
 
+/// <summary>
+/// Reset the content of the board to nothing so it can be populated from a FEN string
+/// </summary>
+/// <param name="self">the board</param>
 void Board_clearBoard( struct Board* self );
+
+/// <summary>
+/// Print the content of the board
+/// </summary>
+/// <param name="self">the board</param>
 void Board_printBoard( struct Board* self );
+
+/// <summary>
+/// Export the content of the board to a FEN string.
+/// This assumes the provided character buffer is of sufficient length
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="fen">the buffer to receive the FEN output</param>
+void Board_exportBoard( struct Board* self, char* fen );
 
 typedef void ( *FenProcessor )( struct Board* self, const char* fenSection );
 
