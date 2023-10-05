@@ -2,6 +2,7 @@
 
 enum Piece
 {
+    EMPTY = 0,
     WHITE_PAWN,
     WHITE_KNIGHT,
     WHITE_BISHOP,
@@ -46,6 +47,7 @@ void Board_shutdown( struct Board* self );
 // Internal methods
 
 void Board_clearBoard( struct Board* self );
+void Board_printBoard( struct Board* self );
 
 typedef void ( *FenProcessor )( struct Board* self, const char* fenSection );
 

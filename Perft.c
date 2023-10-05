@@ -24,7 +24,7 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
     }
     
     unsigned long count = Perft_run( board, depth, true );
-    fprintf( runtimeSetup->logger, "Move count: %u", count );
+    fprintf( runtimeSetup->logger, "Move count: %u\n", count );
 }
 
 void Perft_fen( struct RuntimeSetup* runtimeSetup, const char* fenWithResults )

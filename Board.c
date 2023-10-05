@@ -37,7 +37,7 @@ struct Board* Board_create( const char* fen )
 
         char* fenCopy = _strdup( fen );
         char* section;
-        char* nextToken;
+        char* nextToken = NULL;
         section = strtok_s( fenCopy, " ", &nextToken );
         
         while ( section != NULL )
@@ -49,7 +49,7 @@ struct Board* Board_create( const char* fen )
 
         free( fenCopy );
     }
-
+    Board_printBoard( board );
     return board;
 }
 
@@ -90,6 +90,11 @@ void Board_clearBoard( struct Board* self )
 
     self->halfmoveClock = 0;
     self->fullmoveNumber = 0;
+
+    for ( unsigned short index = 0; index < 64; index++ )
+    {
+        self->squares[ index ] = EMPTY;
+    }
 }
 
 void Board_processBoardLayout( struct Board* self, const char* fenSection ) 
@@ -98,14 +103,14 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
     int file = 0;
 
     char* section = _strdup( fenSection );
-    char* nextToken;
+    char* nextToken = NULL;
     char* rankSpecification = strtok_s( section, "/", &nextToken );
 
     while ( rankSpecification != NULL )
     {
         while ( *rankSpecification != '\0' )
         {
-            unsigned char index = ( rank << 3 ) + file;
+            unsigned char index = ( rank << 3 ) + file++;
 
             char item = *rankSpecification++;
             switch ( item )
@@ -143,26 +148,32 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
 
                 case 'p':
                     self->blackPieces.bbPawn |= ( 1ull << index );
+                    self->squares[ index ] = BLACK_PAWN;
                     break;
 
                 case 'n':
                     self->blackPieces.bbKnight |= ( 1ull << index );
+                    self->squares[ index ] = BLACK_KNIGHT;
                     break;
 
                 case 'b':
                     self->blackPieces.bbBishop |= ( 1ull << index );
+                    self->squares[ index ] = BLACK_BISHOP;
                     break;
 
                 case 'r':
                     self->blackPieces.bbRook |= ( 1ull << index );
+                    self->squares[ index ] = BLACK_ROOK;
                     break;
 
                 case 'q':
                     self->blackPieces.bbQueen |= ( 1ull << index );
+                    self->squares[ index ] = BLACK_QUEEN;
                     break;
 
                 case 'k':
                     self->blackPieces.bbKing |= ( 1ull << index );
+                    self->squares[ index ] = BLACK_KING;
                     self->blackPieces.king = index;
                     break;
 
@@ -174,7 +185,8 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
                 case '6':
                 case '7':
                 case '8':
-                    file += (item - '0');
+                    // Subtract '1', not '0' here as we are already incrementing file by one
+                    file += (item - '1');
                     break;
             }
         }
@@ -247,3 +259,36 @@ void Board_processFullmoveNumber( struct Board* self, const char* fenSection )
     }
 }
 
+void Board_printBoard( struct Board* self )
+{
+    static const char pieceNames[] = " PNBRQKpnbrqk";
+    printf( "     A   B   C   D   E   F   G   H \n" );
+    printf( "   +---+---+---+---+---+---+---+---+\n" );
+    for ( char rank = 8; rank > 0; rank-- )
+    {
+        printf( " %d |", rank );
+        for ( char file = 1; file <= 8; file++ )
+        {
+            unsigned char item = self->squares[ ((rank-1)<<3)+(file-1) ];
+            unsigned char piece = pieceNames[ item ];
+            if ( ( rank + file ) & 1 )
+            {
+                printf( " %c |", pieceNames[ item ] );
+            }
+            else
+            {
+                if ( item == EMPTY )
+                {
+                    printf( ":::|" );
+                }
+                else
+                {
+                    printf( ":%c:|", pieceNames[ item ] );
+                }
+            }
+        }
+        printf( " %d\n", rank );
+        printf( "   +---+---+---+---+---+---+---+---+\n" );
+    }
+    printf( "     A   B   C   D   E   F   G   H \n" );
+}
