@@ -11,4 +11,6 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename );
 
 // Internal methods
 
-unsigned long Perft_loop( struct Board* board, int depth, bool divide );
+unsigned long Perft_run( struct Board* board, int depth, bool divide );
+unsigned long Perft_loop( struct Board* board, int depth );
+unsigned long Perft_divide( struct Board* board, int depth );

@@ -82,3 +82,15 @@ bool spliterate( char* line, char** command, char** arguments )
 
     return result;
 }
+
+unsigned char squareToIndex( const char* square )
+{
+    return ( ( square[ 1 ] - '1' ) << 3 ) + ( square[ 0 ] - 'a' );
+}
+
+void indexToSquare( unsigned char index, char** square )
+{
+    *square[ 0 ] = 'a' + ( index & 0b00000111 );
+    *square[ 1 ] = '1' + ( ( index >> 3 ) & 0b00000111 );
+    *square[ 2 ] = '\0';
+}

@@ -23,7 +23,7 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
         return;
     }
     
-    unsigned long count = Perft_loop( board, depth, true );
+    unsigned long count = Perft_run( board, depth, true );
     fprintf( runtimeSetup->logger, "Move count: %u", count );
 }
 
@@ -71,7 +71,17 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
     }
 }
 
-unsigned long Perft_loop( struct Board* board, int depth, bool divide )
+unsigned long Perft_run( struct Board* board, int depth, bool divide )
+{
+    return divide ? Perft_loop( board, depth ) : Perft_divide( board, depth );
+}
+
+unsigned long Perft_loop( struct Board* board, int depth )
+{
+    return 1;
+}
+
+unsigned long Perft_divide( struct Board* board, int depth )
 {
     return 1;
 }

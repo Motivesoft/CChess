@@ -29,3 +29,18 @@ char* sanitize( char* string );
 bool spliterate( char* line, char** command, char** arguments );
 
 typedef void( *WriteToFile )( char* format, ... );
+
+/// <summary>
+/// Convert 'a1' to 0
+/// </summary>
+/// <param name="square">the alphanumeric square (lowercase)</param>
+/// <returns>an index (0-63)</returns>
+unsigned char squareToIndex( const char* square );
+
+/// <summary>
+/// Convert 0 to 'a1' and place that into the provided string buffer, which is expected
+/// to be large enough to receive this data
+/// </summary>
+/// <param name="index">an index (0-63)</param>
+/// <param name="square">is set to the alphanumeric square (lowercase)</param>
+void indexToSquare( unsigned char index, char** square );
