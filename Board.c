@@ -134,6 +134,7 @@ void Board_clearBoard( struct Board* self )
     self->whitePieces.bbRook = 0;
     self->whitePieces.bbQueen = 0;
     self->whitePieces.bbKing = 0;
+    self->whitePieces.bbAll = 0;
     self->whitePieces.king = OFF_BOARD;
 
     self->blackPieces.bbPawn = 0;
@@ -142,6 +143,7 @@ void Board_clearBoard( struct Board* self )
     self->blackPieces.bbRook = 0;
     self->blackPieces.bbQueen = 0;
     self->blackPieces.bbKing = 0;
+    self->blackPieces.bbAll = 0;
     self->blackPieces.king = OFF_BOARD;
 
     self->whiteToMove = true;
@@ -262,6 +264,9 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
         file = 0;
     }
 
+    self->whitePieces.bbAll = self->whitePieces.bbPawn | self->whitePieces.bbKnight | self->whitePieces.bbBishop | self->whitePieces.bbRook | self->whitePieces.bbQueen | self->whitePieces.bbKing;
+    self->blackPieces.bbAll = self->blackPieces.bbPawn | self->blackPieces.bbKnight | self->blackPieces.bbBishop | self->blackPieces.bbRook | self->blackPieces.bbQueen | self->blackPieces.bbKing;
+
     free( section );
 }
 
@@ -367,31 +372,31 @@ void Board_exportBoard( struct Board* self, char* fen )
             fen[ fenIndex++ ] = '/';
         }
 
-        int empty = 0;
+        int Board_emptySquare = 0;
         for ( unsigned char file = 1; file <= 8; file++ )
         {
             unsigned char item = self->squares[ ( ( rank - 1 ) << 3 ) + ( file - 1 ) ];
 
             if ( item == EMPTY )
             {
-                empty++;
+                Board_emptySquare++;
             }
             else
             {
-                if ( empty > 0 )
+                if ( Board_emptySquare > 0 )
                 {
-                    fen[ fenIndex++ ] = '0' + empty;
-                    empty = 0;
+                    fen[ fenIndex++ ] = '0' + Board_emptySquare;
+                    Board_emptySquare = 0;
                 }
 
                 fen[ fenIndex++ ] = pieceNames[ item ];
             }
         }
 
-        if ( empty > 0 )
+        if ( Board_emptySquare > 0 )
         {
-            fen[ fenIndex++ ] = '0' + empty;
-            empty = 0;
+            fen[ fenIndex++ ] = '0' + Board_emptySquare;
+            Board_emptySquare = 0;
         }
     }
 
@@ -533,7 +538,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             {
                 MoveList_addMove( moveList, Move_createMove( index, destination ) );
             }
-            else if ( attacker( self, destination ) )
+            else if ( Board_containsAttacker( self, destination ) )
             {
                 if ( rankFromIndex( destination ) == promotionRank )
                 {
@@ -556,7 +561,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             {
                 MoveList_addMove( moveList, Move_createMove( index, destination ) );
             }
-            else if ( attacker( self, destination ) )
+            else if ( Board_containsAttacker( self, destination ) )
             {
                 if ( rankFromIndex( destination ) == promotionRank )
                 {
@@ -592,7 +597,7 @@ void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
             if ( directions[ loop ] != 0 )
             {
                 destination = index + directions[ loop ];
-                if ( !friendly( self, destination ) )
+                if ( !Board_containsFriendly( self, destination ) )
                 {
                     MoveList_addMove( moveList, Move_createMove( index, destination ) );
                 }
@@ -611,15 +616,15 @@ unsigned long fileFromIndex( unsigned long index )
     return index & 0b00000111;
 }
 
-bool empty( struct Board* self, unsigned long index )
+bool Board_emptySquare( struct Board* self, unsigned long index )
 {
     return self->squares[ index ] == EMPTY;
 }
 
-bool friendly( struct Board* self, unsigned long index )
+bool Board_containsFriendly( struct Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
-    if ( empty( self, index ) )
+    if ( Board_emptySquare( self, index ) )
     {
         return false;
     }
@@ -634,10 +639,10 @@ bool friendly( struct Board* self, unsigned long index )
     }
 }
 
-bool attacker( struct Board* self, unsigned long index )
+bool Board_containsAttacker( struct Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
-    if ( empty( self, index ) )
+    if ( Board_emptySquare( self, index ) )
     {
         return false;
     }
@@ -661,8 +666,8 @@ bool Board_makeMove( struct Board* self, struct Move* move )
 {
     // Return false if it becomes apparent that the move is not legal
 
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
-    const struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+    struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
     unsigned long from = Move_from( move );
     unsigned long to = Move_to( move );
@@ -671,13 +676,26 @@ bool Board_makeMove( struct Board* self, struct Move* move )
 
     // Steps
     // - remove any piece being captured from bb and from squares
-    if ( !Board_empty( self, to ) )
+    if ( !Board_emptySquare( self, to ) )
     {
-        // Capture
+        // Capture - remove enemy piece from the board
+        self->squares[ to ] = EMPTY;
+        attackerPieces->bbPawn ^= to;
+        attackerPieces->bbKnight ^= to;
+        attackerPieces->bbBishop ^= to;
+        attackerPieces->bbRook ^= to;
+        attackerPieces->bbQueen ^= to;
+        attackerPieces->bbKing ^= to;
+        attackerPieces->bbAll ^= to;
     }
     else if ( to == self->enPassantSquare && Board_isPawn( fromPiece ) )
     {
-        // enPassant capture
+        // enPassant capture - remove enemy piece (pawn) from the board
+        const enPassantAttackerIndex = self->whiteToMove ? self->enPassantSquare - 8 : self->enPassantSquare + 8;
+
+        self->squares[ enPassantAttackerIndex ] = EMPTY;
+        attackerPieces->bbPawn ^= enPassantAttackerIndex;
+        attackerPieces->bbAll ^= enPassantAttackerIndex;
     }
 
     //   - include pawn captured by enPassant (which won't be on "to" square)
@@ -755,6 +773,10 @@ bool Board_compare( struct Board* self, struct Board* other )
     {
         return false;
     }
+    if ( self->whitePieces.bbAll != other->whitePieces.bbAll )
+    {
+        return false;
+    }
     if ( self->whitePieces.king != other->whitePieces.king )
     {
         return false;
@@ -788,6 +810,10 @@ bool Board_compare( struct Board* self, struct Board* other )
         return false;
     }
     if ( self->blackPieces.bbKing != other->blackPieces.bbKing )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbAll != other->blackPieces.bbAll )
     {
         return false;
     }

@@ -33,6 +33,7 @@ struct PieceList
     unsigned long long bbRook;
     unsigned long long bbQueen;
     unsigned long long bbKing;
+    unsigned long long bbAll;
     unsigned char king;
     bool kingsideCastling;
     bool queensideCastling;
@@ -102,21 +103,21 @@ unsigned long fileFromIndex( unsigned long index );
 /// </summary>
 /// <param name="self">the board</param>
 /// <param name="index">the location</param>
-bool empty( struct Board* self, unsigned long index );
+bool Board_emptySquare( struct Board* self, unsigned long index );
 
 /// <summary>
 /// Is the piece at index a friendly piece?
 /// </summary>
 /// <param name="self">the board</param>
 /// <param name="index">the location</param>
-bool friendly( struct Board* self, unsigned long index );
+bool Board_containsFriendly( struct Board* self, unsigned long index );
 
 /// <summary>
 /// Is the piece at index an attacker?
 /// </summary>
 /// <param name="self">the board</param>
 /// <param name="index">the location</param>
-bool attacker( struct Board* self, unsigned long index );
+bool Board_containsAttacker( struct Board* self, unsigned long index );
 
 bool Board_isPawn( enum Piece piece );
 
