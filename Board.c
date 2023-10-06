@@ -890,27 +890,27 @@ void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piec
         switch ( piece & COLOR_MASK )
         {
             case PAWN:
-                pieceList->bbPawn ^= index;
+                pieceList->bbPawn |= mask;
                 break;
             case KNIGHT:
-                pieceList->bbKnight ^= index;
+                pieceList->bbKnight |= mask;
                 break;
             case BISHOP:
-                pieceList->bbBishop ^= index;
+                pieceList->bbBishop |= mask;
                 break;
             case ROOK:
-                pieceList->bbRook ^= index;
+                pieceList->bbRook |= mask;
                 break;
             case QUEEN:
-                pieceList->bbQueen ^= index;
+                pieceList->bbQueen |= mask;
                 break;
             case KING:
-                pieceList->bbKing |= index;
+                pieceList->bbKing |= mask;
                 pieceList->king = index;
                 break;
         }
 
-        pieceList->bbAll ^= index;
+        pieceList->bbAll |= mask;
     }
 }
 
