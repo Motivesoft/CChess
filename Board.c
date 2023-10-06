@@ -805,6 +805,7 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     unsigned long to = Move_to( move );
 
     unsigned char fromPiece = self->squares[ from ];
+    unsigned char toPiece = self->squares[ to ];
 
     // Steps
     // - remove any piece being captured from bb and from squares
@@ -824,6 +825,7 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     }
 
     // - lift piece from "from" and put it on "to" in both bb and squares (and king if appropriate)
+    //   - replace "to" piece in the case of promotion
     Board_clearSquare( self, friendlyPieces, from );
 
     if ( Move_isPromotion( move ) )
@@ -835,15 +837,37 @@ bool Board_makeMove( struct Board* self, struct Move* move )
         Board_setSquare( self, friendlyPieces, fromPiece, to );
     }
 
-    //   - replace "to" piece in the case of promotion
     // - clear enPassant and set to new value if required
+    if ( Board_isPawn( fromPiece ) && abs( from - to ) == 16 )
+    {
+        // Double pawn move - set en passant
+        self->enPassantSquare = ( from + to ) / 2;
+    }
+    else
+    {
+        self->enPassantSquare = OFF_BOARD;
+    }
+
     // - move rook if castling in both bb and squares
     // - update castling rights if affected by this move
-    // - increment or reset halfmove clock
-    // - increment fullmove number if next move will be for white
     // - swap active color
+    self->whiteToMove = !self->whiteToMove;
 
+    // - increment or reset halfmove clock
+    if ( Board_isPawn( fromPiece ) || toPiece != EMPTY )
+    {
+        self->halfmoveClock++;
+    }
+    else
+    {
+        self->halfmoveClock = 0;
+    }
 
+    // - increment fullmove number if next move will be for white
+    if ( self->whiteToMove )
+    {
+        self->fullmoveNumber++;
+    }
 
     return true;
 }
