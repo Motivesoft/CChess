@@ -118,8 +118,8 @@ void Board_processEnPassantSquare( struct Board* self, const char* fenSection );
 void Board_processHalfmoveClock( struct Board* self, const char* fenSection );
 void Board_processFullmoveNumber( struct Board* self, const char* fenSection );
 
-unsigned long rankFromIndex( unsigned long index );
-unsigned long fileFromIndex( unsigned long index );
+unsigned long Board_rankFromIndex( unsigned long index );
+unsigned long Board_fileFromIndex( unsigned long index );
 
 /// <summary>
 /// Is the square at index empty?
@@ -181,3 +181,4 @@ bool Board_makeMove( struct Board* self, struct Move* move );
 
 void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
 void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList );
+void Board_generateKingMoves( struct Board* self, struct MoveList* moveList );

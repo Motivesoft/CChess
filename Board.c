@@ -21,6 +21,7 @@ static const char COLOR_BIT = BLACK_PAWN - WHITE_PAWN;
 static const char COLOR_MASK = BLACK_PAWN - WHITE_PAWN - 1;
 
 static unsigned long knightDirections[ 64 ][ 8 ];
+static unsigned long kingDirections[ 64 ][ 8 ];
 
 struct Board* Board_create( const char* fen )
 {
@@ -122,6 +123,46 @@ static void Board_initialize()
 
                 // What offset can we move to from here?
                 knightDirections[ index ][ loop ] = (knightMoves[ loop ][ 1 ] << 3) + knightMoves[ loop ][ 0 ];
+            }
+        }
+    }
+
+    // Create an array of knight moves and record which are possible from each starting square
+    short kingMoves[ 8 ][ 2 ] =
+    {
+        { -1, -1 },
+        { -1,  0 },
+        { -1, +1 },
+        {  0, -1 },
+        {  0, +1 },
+        { +1, -1 },
+        { +1,  0 },
+        { +1, +1 },
+    };
+
+    for ( short rank = 0; rank < 8; rank++ )
+    {
+        for ( short file = 0; file < 8; file++ )
+        {
+            short index = ( rank * 8 ) + file;
+
+            for ( short loop = 0; loop < 8; loop++ )
+            {
+                // 0 means "not valid from here"
+                kingDirections[ index ][ loop ] = 0;
+
+                // Filter the off-board moves
+                if ( file + kingMoves[ loop ][ 0 ] < 0 || file + kingMoves[ loop ][ 0 ] > 7 )
+                {
+                    continue;
+                }
+                if ( rank + kingMoves[ loop ][ 1 ] < 0 || rank + kingMoves[ loop ][ 1 ] > 7 )
+                {
+                    continue;
+                }
+
+                // What offset can we move to from here?
+                kingDirections[ index ][ loop ] = ( kingMoves[ loop ][ 1 ] << 3 ) + kingMoves[ loop ][ 0 ];
             }
         }
     }
@@ -477,6 +518,7 @@ struct MoveList* Board_generateMoves( struct Board* self )
 
     Board_generatePawnMoves( self, moveList );
     Board_generateKnightMoves( self, moveList );
+    Board_generateKingMoves( self, moveList );
 
     return moveList;
 }
@@ -511,7 +553,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
         destination = index + oneStep;
         if ( self->squares[ destination ] == EMPTY )
         {
-            if ( rankFromIndex( destination ) == promotionRank )
+            if ( Board_rankFromIndex( destination ) == promotionRank )
             {
                 for ( unsigned short loop = 0; loop < 4; loop++ )
                 {
@@ -525,14 +567,14 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
                 // Those elible for a single step forward can maybe also do two steps
      
                 destination = index + twoStep;
-                if ( rankFromIndex( index ) == homeRank && self->squares[ destination ] == EMPTY )
+                if ( Board_rankFromIndex( index ) == homeRank && self->squares[ destination ] == EMPTY )
                 {
                     MoveList_addMove( moveList, Move_createMove( index, destination ) );
                 }
             }
         }
 
-        if ( fileFromIndex( index ) > 0 )
+        if ( Board_fileFromIndex( index ) > 0 )
         {
             destination = index + captureL;
             if ( destination == self->enPassantSquare )
@@ -541,7 +583,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             }
             else if ( Board_containsAttacker( self, destination ) )
             {
-                if ( rankFromIndex( destination ) == promotionRank )
+                if ( Board_rankFromIndex( destination ) == promotionRank )
                 {
                     for ( unsigned short loop = 0; loop < 4; loop++ )
                     {
@@ -555,7 +597,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             }
         }
 
-        if ( fileFromIndex( index ) < 7 )
+        if ( Board_fileFromIndex( index ) < 7 )
         {
             destination = index + captureR;
             if ( destination == self->enPassantSquare )
@@ -564,7 +606,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             }
             else if ( Board_containsAttacker( self, destination ) )
             {
-                if ( rankFromIndex( destination ) == promotionRank )
+                if ( Board_rankFromIndex( destination ) == promotionRank )
                 {
                     for ( unsigned short loop = 0; loop < 4; loop++ )
                     {
@@ -607,12 +649,90 @@ void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
     }
 }
 
-unsigned long rankFromIndex( unsigned long index )
+void Board_generateKingMoves( struct Board* self, struct MoveList* moveList )
+{
+    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long index = friendlyPieces->king;
+    unsigned long destination;
+
+    long kingRank = Board_rankFromIndex( index );
+    long kingFile = Board_fileFromIndex( index );
+
+    // Normal one-square moves
+    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    {
+        if ( kingRank + rankOffset < 0 || kingRank + rankOffset > 7 )
+        {
+            continue;
+        }
+
+        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        {
+            if ( kingFile + fileOffset < 0 || kingFile + fileOffset > 7 )
+            {
+                continue;
+            }
+
+            destination = index + ( rankOffset * 8 ) + fileOffset;
+
+            if ( !Board_containsFriendly( self, destination ) )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+            }
+
+        }
+    }
+
+    // Castling? 
+    // Assume the flags are accurate but still need to make sure there is nothing in the way and we're not moving through check
+    unsigned long long allPieces = friendlyPieces->bbAll & attackerPieces->bbAll;
+
+    if ( friendlyPieces->kingsideCastling )
+    {
+        // It is simply easier to do this with bespoke code for both colors
+        if ( self->whiteToMove )
+        {
+            if ( Board_isEmptySquare( self, F1 ) && Board_isEmptySquare( self, G1 ) )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, G1 ) );
+            }
+        }
+        else
+        {
+            if ( Board_isEmptySquare( self, F8 ) && Board_isEmptySquare( self, G8 ) )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, G8 ) );
+            }
+        }
+    }
+    if ( friendlyPieces->queensideCastling )
+    {
+        // It is simply easier to do this with bespoke code for both colors
+        if ( self->whiteToMove )
+        {
+            if ( Board_isEmptySquare( self, B1 ) && Board_isEmptySquare( self, C1 ) && Board_isEmptySquare( self, D1 ) )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, C1 ) );
+            }
+        }
+        else
+        {
+            if ( Board_isEmptySquare( self, B8 ) && Board_isEmptySquare( self, C8 ) && Board_isEmptySquare( self, D8 ) )
+            {
+                MoveList_addMove( moveList, Move_createMove( index, C8 ) );
+            }
+        }
+    }
+}
+
+unsigned long Board_rankFromIndex( unsigned long index )
 {
     return (index >> 3) & 0b00000111;
 }
 
-unsigned long fileFromIndex( unsigned long index )
+unsigned long Board_fileFromIndex( unsigned long index )
 {
     return index & 0b00000111;
 }
@@ -879,12 +999,12 @@ bool Board_makeMove( struct Board* self, struct Move* move )
 
     if ( Board_isRook( fromPiece ) )
     {
-        if ( Move_fromFile( move ) == 0 )
+        if ( Board_fileFromIndex( from ) == 0 )
         {
             friendlyPieces->queensideCastling = false;
 
         }
-        else if ( Move_fromFile( move ) == 7 )
+        else if ( Board_fileFromIndex( from ) == 7 )
         {
             friendlyPieces->kingsideCastling = false;
         }
@@ -892,12 +1012,12 @@ bool Board_makeMove( struct Board* self, struct Move* move )
 
     if ( Board_isRook( toPiece ) )
     {
-        if ( Move_toFile( move ) == 0 )
+        if ( Board_fileFromIndex( to ) == 0 )
         {
             attackerPieces->queensideCastling = false;
 
         }
-        else if ( Move_toFile( move ) == 7 )
+        else if ( Board_fileFromIndex( to ) == 7 )
         {
             attackerPieces->kingsideCastling = false;
         }
@@ -909,11 +1029,12 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     // - increment or reset halfmove clock
     if ( Board_isPawn( fromPiece ) || toPiece != EMPTY )
     {
-        self->halfmoveClock++;
+        // Pawn move or capture - reset halfmove clock
+        self->halfmoveClock = 0;
     }
     else
     {
-        self->halfmoveClock = 0;
+        self->halfmoveClock++;
     }
 
     // - increment fullmove number if next move will be for white
