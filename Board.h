@@ -118,6 +118,8 @@ bool friendly( struct Board* self, unsigned long index );
 /// <param name="index">the location</param>
 bool attacker( struct Board* self, unsigned long index );
 
+bool Board_isPawn( enum Piece piece );
+
 /// <summary>
 /// Generate the pseudolegal moves for the current position
 /// </summary>

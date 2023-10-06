@@ -480,7 +480,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
     static const unsigned long whitePromotionPieces[] = { WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN };
     static const unsigned long blackPromotionPieces[] = { BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN };
 
-    const struct PieceList* playerPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
     const unsigned long oneStep = self->whiteToMove ? +8 : -8;
     const unsigned long twoStep = self->whiteToMove ? +16 : -16;
@@ -492,7 +492,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
     const unsigned long promotionRank = self->whiteToMove ? 7 : 0;
     const unsigned long *promotionPieces = self->whiteToMove ? whitePromotionPieces : blackPromotionPieces;
 
-    unsigned long long pieces = playerPieces->bbPawn;
+    unsigned long long pieces = friendlyPieces->bbPawn;
 
     unsigned long index;
     unsigned long destination;
@@ -576,9 +576,9 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
 
 void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
 {
-    const struct PieceList* playerPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
-    unsigned long long pieces = playerPieces->bbKnight;
+    unsigned long long pieces = friendlyPieces->bbKnight;
 
     unsigned long index;
     unsigned long destination;
@@ -652,14 +652,36 @@ bool attacker( struct Board* self, unsigned long index )
     }
 }
 
+bool Board_isPawn( enum Piece piece )
+{
+    return piece == WHITE_PAWN || piece == BLACK_PAWN;
+}
+
 bool Board_makeMove( struct Board* self, struct Move* move )
 {
     // Return false if it becomes apparent that the move is not legal
 
+    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long from = Move_from( move );
+    unsigned long to = Move_to( move );
+
+    unsigned char fromPiece = self->squares[ from ];
+
     // Steps
     // - remove any piece being captured from bb and from squares
+    if ( !Board_empty( self, to ) )
+    {
+        // Capture
+    }
+    else if ( to == self->enPassantSquare && Board_isPawn( fromPiece ) )
+    {
+        // enPassant capture
+    }
+
     //   - include pawn captured by enPassant (which won't be on "to" square)
-    // - lift piece from "from" and put it on "to" in both bb and squares
+    // - lift piece from "from" and put it on "to" in both bb and squares (and king if appropriate)
     //   - replace "to" piece in the case of promotion
     // - clear enPassant and set to new value if required
     // - move rook if castling in both bb and squares
@@ -667,6 +689,8 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     // - increment or reset halfmove clock
     // - increment fullmove number if next move will be for white
     // - swap active color
+
+
 
     return true;
 }
