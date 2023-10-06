@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "Perft.h"
 #include "Utility.h"
@@ -31,8 +32,15 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
         return;
     }
     
-    unsigned long count = Perft_run( board, depth, true );
-    fprintf( runtimeSetup->logger, "Move count: %u\n", count );
+    clock_t start = clock();
+
+    unsigned long count = Perft_run( board, depth, runtimeSetup->debug );
+
+    clock_t end = clock();
+
+    float totalTime = (float) ( end - start ) / CLOCKS_PER_SEC;
+    float nps = count / totalTime;
+    fprintf( runtimeSetup->logger, "Move count: %u in %0.3fs (%0.0f nps)\n", count, totalTime, nps );
 }
 
 void Perft_fen( struct RuntimeSetup* runtimeSetup, const char* fenWithResults )
@@ -103,11 +111,6 @@ unsigned long Perft_loop( struct Board* board, int depth )
 
     struct Board* copy = Board_copy( board );
 
-    if ( !Board_compare( board, copy ) )
-    {
-        printf( "copy error" );
-    }
-
     for ( unsigned char loop = 0; loop < moveList->count; loop++ )
     {
         if ( Board_makeMove( board, moveList->moves[ loop ] ) )
@@ -116,11 +119,6 @@ unsigned long Perft_loop( struct Board* board, int depth )
         }
 
         Board_apply( board, copy );
-
-        if ( !Board_compare( board, copy ) )
-        {
-            printf( "copy error" );
-        }
     }
     Board_destroy( copy );
 
@@ -146,11 +144,6 @@ unsigned long Perft_divide( struct Board* board, int depth )
 
     struct Board* copy = Board_copy( board );
 
-    if ( !Board_compare( board, copy ) )
-    {
-        printf( "copy error" );
-    }
-
     for ( unsigned char loop = 0; loop < moveList->count; loop++ )
     {
         if ( Board_makeMove( board, moveList->moves[ loop ] ) )
@@ -165,11 +158,6 @@ unsigned long Perft_divide( struct Board* board, int depth )
         }
 
         Board_apply( board, copy );
-
-        if ( !Board_compare( board, copy ) )
-        {
-            printf( "copy error" );
-        }
     }
     Board_destroy( copy );
 
