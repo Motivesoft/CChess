@@ -1,11 +1,20 @@
-#include "stdafx.h"
+#include <io.h>
+#include <ctype.h>
+#include <errno.h>
+#include <intrin.h>
+#include <memory.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "RuntimeSetup.h"
 
-#define LOG_DEBUG( ... ) log( self, DEBUG, __VA_ARGS__ ) 
-#define LOG_INFO( ... ) log( self, INFO, __VA_ARGS__ ) 
-#define LOG_WARN( ... ) log( self, WARN, __VA_ARGS__ ) 
-#define LOG_ERROR( ... ) log( self, ERROR, __VA_ARGS__ ) 
+#define LOG_DEBUG( ... ) RuntimeSetup_log( self, DEBUG, __VA_ARGS__ ) 
+#define LOG_INFO( ... ) RuntimeSetup_log( self, INFO, __VA_ARGS__ ) 
+#define LOG_WARN( ... ) RuntimeSetup_log( self, WARN, __VA_ARGS__ ) 
+#define LOG_ERROR( ... ) RuntimeSetup_log( self, ERROR, __VA_ARGS__ ) 
 
 struct RuntimeSetup* RuntimeSetup_createRuntimeSetup()
 {
@@ -119,7 +128,7 @@ char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferS
     return fgets( buffer, bufferSize, self->input );
 }
 
-void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... )
+void RuntimeSetup_log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... )
 {
     if ( level == DEBUG && !self->debug )
     {

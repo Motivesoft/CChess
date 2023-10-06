@@ -1,14 +1,23 @@
-#include "stdafx.h"
+#include <io.h>
+#include <ctype.h>
+#include <errno.h>
+#include <intrin.h>
+#include <memory.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "Perft.h"
 #include "UCI.h"
 
 // Internal methods
 
-#define LOG_DEBUG( ... ) { log( runtimeSetup, DEBUG, __VA_ARGS__ ); }
-#define LOG_INFO( ... ) { log( runtimeSetup, INFO, __VA_ARGS__ ); }
-#define LOG_WARN( ... ) { log( runtimeSetup, WARN, __VA_ARGS__ ); }
-#define LOG_ERROR( ... ) { log( runtimeSetup, ERROR, __VA_ARGS__ ); }
+#define LOG_DEBUG( ... ) { RuntimeSetup_log( runtimeSetup, DEBUG, __VA_ARGS__ ); }
+#define LOG_INFO( ... ) { RuntimeSetup_log( runtimeSetup, INFO, __VA_ARGS__ ); }
+#define LOG_WARN( ... ) { RuntimeSetup_log( runtimeSetup, WARN, __VA_ARGS__ ); }
+#define LOG_ERROR( ... ) { RuntimeSetup_log( runtimeSetup, ERROR, __VA_ARGS__ ); }
 
 static const char* STARTPOS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 

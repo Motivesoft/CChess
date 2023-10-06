@@ -1,8 +1,14 @@
-// CChess.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
-#include "stdafx.h"
+#include <io.h>
+#include <ctype.h>
+#include <errno.h>
 #include <fcntl.h> 
+#include <intrin.h>
+#include <memory.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "UCI.h"
 
@@ -11,10 +17,10 @@
 
 #define BUFFER_SIZE 4096
 
-#define LOG_DEBUG( ... ) { log( runtimeSetup, DEBUG, __VA_ARGS__ ); }
-#define LOG_INFO( ... ) { log( runtimeSetup, INFO, __VA_ARGS__ ); }
-#define LOG_WARN( ... ) { log( runtimeSetup, WARN, __VA_ARGS__ ); }
-#define LOG_ERROR( ... ) { log( runtimeSetup, ERROR, __VA_ARGS__ ); }
+#define LOG_DEBUG( ... ) { RuntimeSetup_log( runtimeSetup, DEBUG, __VA_ARGS__ ); }
+#define LOG_INFO( ... ) { RuntimeSetup_log( runtimeSetup, INFO, __VA_ARGS__ ); }
+#define LOG_WARN( ... ) { RuntimeSetup_log( runtimeSetup, WARN, __VA_ARGS__ ); }
+#define LOG_ERROR( ... ) { RuntimeSetup_log( runtimeSetup, ERROR, __VA_ARGS__ ); }
 
 int main( int argc, char** argv )
 {

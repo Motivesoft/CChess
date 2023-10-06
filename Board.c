@@ -1,4 +1,13 @@
-#include "stdafx.h"
+#include <io.h>
+#include <ctype.h>
+#include <errno.h>
+#include <intrin.h>
+#include <memory.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "Board.h"
 #include "Utility.h"
@@ -74,6 +83,7 @@ void Board_destroy( struct Board* self )
 
 void Board_initialize( struct Board* self )
 {
+    // Create an array of knight moves and record which are possible from each starting square
     short knightMoves[8][2] =
     { 
         { -2, -1 },
@@ -94,6 +104,7 @@ void Board_initialize( struct Board* self )
 
             for ( short loop = 0; loop < 8; loop++ )
             {
+                // 0 means "not valid from here"
                 knightDirections[ index ][ loop ] = 0;
 
                 // Filter the off-board moves
@@ -106,6 +117,7 @@ void Board_initialize( struct Board* self )
                     continue;
                 }
 
+                // What offset can we move to from here?
                 knightDirections[ index ][ loop ] = (knightMoves[ loop ][ 1 ] << 3) + knightMoves[ loop ][ 0 ];
             }
         }

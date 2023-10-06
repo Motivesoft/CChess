@@ -44,4 +44,4 @@ enum LogLevel
     ERROR
 };
 
-void log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... );
+void RuntimeSetup_log( struct RuntimeSetup* self, enum LogLevel level, const char* format, ... );
