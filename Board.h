@@ -49,10 +49,14 @@ struct Board
     unsigned short fullmoveNumber;
 };
 
+unsigned long knightDirections[ 64 ][ 8 ];
+
 struct Board* Board_create( const char* fen );
 void Board_destroy( struct Board* self );
 
 // Internal methods
+
+void Board_initialize( struct Board* self );
 
 /// <summary>
 /// Reset the content of the board to nothing so it can be populated from a FEN string
@@ -87,7 +91,6 @@ void Board_processFullmoveNumber( struct Board* self, const char* fenSection );
 
 unsigned long rankFromIndex( unsigned long index );
 unsigned long fileFromIndex( unsigned long index );
-
 
 /// <summary>
 /// Is the square at index empty?
@@ -130,3 +133,4 @@ bool Board_makeMove( struct Board* self, struct Move* move );
 void Board_unmakeMove( struct Board* self );
 
 void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
+void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList );

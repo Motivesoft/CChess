@@ -16,6 +16,7 @@ struct Board* Board_create( const char* fen )
 
     if ( board != NULL )
     {
+        Board_initialize( board );
         Board_clearBoard( board );
 
         // FEN string is multiple space-separated sections as:
@@ -68,6 +69,46 @@ void Board_destroy( struct Board* self )
     if ( self != NULL )
     {
         free( self );
+    }
+}
+
+void Board_initialize( struct Board* self )
+{
+    short knightMoves[8][2] =
+    { 
+        { -2, -1 },
+        { -2, +1 },
+        { -1, -2 },
+        { -1, +2 },
+        { +1, -2 },
+        { +1, +2 },
+        { +2, -1 },
+        { +2, +1 },
+    };
+
+    for ( short rank = 0; rank < 8; rank++ )
+    {
+        for ( short file = 0; file < 8; file++ )
+        {
+            short index = ( rank * 8 ) + file;
+
+            for ( short loop = 0; loop < 8; loop++ )
+            {
+                knightDirections[ index ][ loop ] = 0;
+
+                // Filter the off-board moves
+                if ( file + knightMoves[ loop ][ 0 ] < 0 || file + knightMoves[ loop ][ 0 ] > 7 )
+                {
+                    continue;
+                }
+                if ( rank + knightMoves[ loop ][ 1 ] < 0 || rank + knightMoves[ loop ][ 1 ] > 7 )
+                {
+                    continue;
+                }
+
+                knightDirections[ index ][ loop ] = (knightMoves[ loop ][ 1 ] << 3) + knightMoves[ loop ][ 0 ];
+            }
+        }
     }
 }
 
@@ -415,14 +456,7 @@ struct MoveList* Board_generateMoves( struct Board* self )
     struct MoveList* moveList = MoveList_createMoveList();
 
     Board_generatePawnMoves( self, moveList );
-
-    //for ( int rank = 0; rank < 8; rank++ )
-    //{
-    //    for ( int file = 0; file < 8; file++ )
-    //    {
-
-    //    }
-    //}
+    Board_generateKnightMoves( self, moveList );
 
     return moveList;
 }
@@ -469,6 +503,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
                 MoveList_addMove( moveList, Move_createMove( index, destination ) );
 
                 // Those elible for a single step forward can maybe also do two steps
+     
                 destination = index + twoStep;
                 if ( rankFromIndex( index ) == homeRank && self->squares[ destination ] == EMPTY )
                 {
@@ -517,6 +552,33 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
                     }
                 }
                 else
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
+{
+    const struct PieceList* playerPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+
+    unsigned long long pieces = playerPieces->bbKnight;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        unsigned long* directions = knightDirections[ index ];
+        for( short loop = 0; loop < 8; loop++ )
+        {
+            if ( directions[ loop ] != 0 )
+            {
+                destination = index + directions[ loop ];
+                if ( !friendly( self, destination ) )
                 {
                     MoveList_addMove( moveList, Move_createMove( index, destination ) );
                 }
