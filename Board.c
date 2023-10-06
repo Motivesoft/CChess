@@ -807,7 +807,7 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     unsigned char fromPiece = self->squares[ from ];
     unsigned char toPiece = self->squares[ to ];
 
-    // Steps
+    // Steps:
     // - remove any piece being captured from bb and from squares
     //   - include pawn captured by enPassant (which won't be on "to" square)
     if ( !Board_isEmptySquare( self, to ) )
@@ -840,7 +840,7 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     // - clear enPassant and set to new value if required
     if ( Board_isPawn( fromPiece ) && abs( from - to ) == 16 )
     {
-        // Double pawn move - set en passant
+        // Double pawn move - set en passant sqaure
         self->enPassantSquare = ( from + to ) / 2;
     }
     else
@@ -849,7 +849,60 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     }
 
     // - move rook if castling in both bb and squares
+    if ( Board_isKing( fromPiece ) )
+    {
+        // Castling? Move the associated rook
+        if ( abs( from - to ) == 2 )
+        {
+            // Kingside or Queenside
+            if ( from < to )
+            {
+                enum Piece rook = self->squares[ from + 3 ];
+                Board_clearSquare( self, friendlyPieces, from + 3 );
+                Board_setSquare( self, friendlyPieces, rook, from + 1 );
+            }
+            else
+            {
+                enum Piece rook = self->squares[ from - 4 ];
+                Board_clearSquare( self, friendlyPieces, from - 4 );
+                Board_setSquare( self, friendlyPieces, rook, from - 1 );
+            }
+        }
+    }
+    
     // - update castling rights if affected by this move
+    if ( Board_isKing( fromPiece ) )
+    {
+        friendlyPieces->kingsideCastling = false;
+        friendlyPieces->queensideCastling = false;
+    }
+
+    if ( Board_isRook( fromPiece ) )
+    {
+        if ( Move_fromFile( move ) == 0 )
+        {
+            friendlyPieces->queensideCastling = false;
+
+        }
+        else if ( Move_fromFile( move ) == 7 )
+        {
+            friendlyPieces->kingsideCastling = false;
+        }
+    }
+
+    if ( Board_isRook( toPiece ) )
+    {
+        if ( Move_toFile( move ) == 0 )
+        {
+            attackerPieces->queensideCastling = false;
+
+        }
+        else if ( Move_toFile( move ) == 7 )
+        {
+            attackerPieces->kingsideCastling = false;
+        }
+    }
+
     // - swap active color
     self->whiteToMove = !self->whiteToMove;
 
