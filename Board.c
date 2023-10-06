@@ -878,7 +878,7 @@ struct Board* Board_copy( struct Board* self )
 
     if ( other != NULL )
     {
-        memcpy( self, other, sizeof( struct Board ) );
+        memcpy( other, self, sizeof( struct Board ) );
     }
 
     return other;
