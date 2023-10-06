@@ -19,6 +19,8 @@ static const char pieceNames[] = " PNBRQK  pnbrqk ";
 // This is expected to be 0b00001000 but we should check
 static const char COLOR_BIT = BLACK_PAWN - WHITE_PAWN;
 
+static unsigned long knightDirections[ 64 ][ 8 ];
+
 struct Board* Board_create( const char* fen )
 {
     struct Board* board = malloc( sizeof( struct Board ) );
@@ -81,7 +83,7 @@ void Board_destroy( struct Board* self )
     }
 }
 
-void Board_initialize( struct Board* self )
+static void Board_initialize()
 {
     // Create an array of knight moves and record which are possible from each starting square
     short knightMoves[8][2] =
@@ -652,10 +654,148 @@ bool attacker( struct Board* self, unsigned long index )
 
 bool Board_makeMove( struct Board* self, struct Move* move )
 {
+    // Return false if it becomes apparent that the move is not legal
+
+    // Steps
+    // - remove any piece being captured from bb and from squares
+    //   - include pawn captured by enPassant (which won't be on "to" square)
+    // - lift piece from "from" and put it on "to" in both bb and squares
+    //   - replace "to" piece in the case of promotion
+    // - clear enPassant and set to new value if required
+    // - move rook if castling in both bb and squares
+    // - update castling rights if affected by this move
+    // - increment or reset halfmove clock
+    // - increment fullmove number if next move will be for white
+    // - swap active color
+
     return true;
 }
 
-void Board_unmakeMove( struct Board* self )
+struct Board* Board_copy( struct Board* self ) 
 {
+    struct Board* other = malloc( sizeof( struct Board ) );
 
+    if ( other != NULL )
+    {
+        memcpy( self, other, sizeof( struct Board ) );
+    }
+
+    return other;
 }
+
+void Board_apply( struct Board* self, struct Board* other ) 
+{
+    memcpy( self, other, sizeof( struct Board ) );
+}
+
+bool Board_compare( struct Board* self, struct Board* other ) 
+{
+    //struct Board
+    //{
+    //    unsigned char squares[ 64 ];
+    //    struct PieceList whitePieces;
+    //    struct PieceList blackPieces;
+    //    bool whiteToMove;
+    //    unsigned char enPassantSquare;
+    //    unsigned short halfmoveClock;
+    //    unsigned short fullmoveNumber;
+    //};
+    for ( short loop = 0; loop < 64; loop++ )
+    {
+        if ( self->squares[ loop ] != other->squares[ loop ] )
+        {
+            return false;
+        }
+    }
+    if ( self->whitePieces.bbPawn != other->whitePieces.bbPawn )
+    {
+        return false;
+    }
+    if ( self->whitePieces.bbKnight != other->whitePieces.bbKnight )
+    {
+        return false;
+    }
+    if ( self->whitePieces.bbBishop != other->whitePieces.bbBishop )
+    {
+        return false;
+    }
+    if ( self->whitePieces.bbRook != other->whitePieces.bbRook )
+    {
+        return false;
+    }
+    if ( self->whitePieces.bbQueen != other->whitePieces.bbQueen )
+    {
+        return false;
+    }
+    if ( self->whitePieces.bbKing != other->whitePieces.bbKing )
+    {
+        return false;
+    }
+    if ( self->whitePieces.king != other->whitePieces.king )
+    {
+        return false;
+    }
+    if ( self->whitePieces.kingsideCastling != other->whitePieces.kingsideCastling )
+    {
+        return false;
+    }
+    if ( self->whitePieces.queensideCastling != other->whitePieces.queensideCastling )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbPawn != other->blackPieces.bbPawn )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbKnight != other->blackPieces.bbKnight )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbBishop != other->blackPieces.bbBishop )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbRook != other->blackPieces.bbRook )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbQueen != other->blackPieces.bbQueen )
+    {
+        return false;
+    }
+    if ( self->blackPieces.bbKing != other->blackPieces.bbKing )
+    {
+        return false;
+    }
+    if ( self->blackPieces.king != other->blackPieces.king )
+    {
+        return false;
+    }
+    if ( self->blackPieces.kingsideCastling != other->blackPieces.kingsideCastling )
+    {
+        return false;
+    }
+    if ( self->blackPieces.queensideCastling != other->blackPieces.queensideCastling )
+    {
+        return false;
+    }
+    if ( self->whiteToMove != other->whiteToMove )
+    {
+        return false;
+    }
+    if ( self->enPassantSquare != other->enPassantSquare )
+    {
+        return false;
+    }
+    if ( self->halfmoveClock != other->halfmoveClock )
+    {
+        return false;
+    }
+    if ( self->fullmoveNumber != other->fullmoveNumber )
+    {
+        return false;
+    }
+    return true;
+    //return memcmp( self, other, sizeof( struct Board ) ) == 0;
+}
+

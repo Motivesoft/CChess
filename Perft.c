@@ -101,6 +101,13 @@ unsigned long Perft_loop( struct Board* board, int depth )
         return moveList->count;
     }
 
+    struct Board* copy = Board_copy( board );
+
+    if ( !Board_compare( board, copy ) )
+    {
+        printf( "copy error" );
+    }
+
     for ( unsigned char loop = 0; loop < moveList->count; loop++ )
     {
         if ( Board_makeMove( board, moveList->moves[ loop ] ) )
@@ -108,8 +115,14 @@ unsigned long Perft_loop( struct Board* board, int depth )
             nodes += Perft_loop( board, depth - 1 );
         }
 
-        Board_unmakeMove( board );
+        Board_apply( board, copy );
+
+        if ( !Board_compare( board, copy ) )
+        {
+            printf( "copy error" );
+        }
     }
+    Board_destroy( copy );
 
     MoveList_destroy( moveList );
 
@@ -131,6 +144,13 @@ unsigned long Perft_divide( struct Board* board, int depth )
 
     struct MoveList* moveList = Board_generateMoves( board );
 
+    struct Board* copy = Board_copy( board );
+
+    if ( !Board_compare( board, copy ) )
+    {
+        printf( "copy error" );
+    }
+
     for ( unsigned char loop = 0; loop < moveList->count; loop++ )
     {
         if ( Board_makeMove( board, moveList->moves[ loop ] ) )
@@ -144,8 +164,14 @@ unsigned long Perft_divide( struct Board* board, int depth )
             printf( "  %s : %d - %s\n", moveString, divideNodes, fenString );
         }
 
-        Board_unmakeMove( board );
+        Board_apply( board, copy );
+
+        if ( !Board_compare( board, copy ) )
+        {
+            printf( "copy error" );
+        }
     }
+    Board_destroy( copy );
 
     MoveList_destroy( moveList );
 

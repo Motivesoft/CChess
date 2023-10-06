@@ -49,14 +49,19 @@ struct Board
     unsigned short fullmoveNumber;
 };
 
-unsigned long knightDirections[ 64 ][ 8 ];
-
 struct Board* Board_create( const char* fen );
 void Board_destroy( struct Board* self );
 
 // Internal methods
+struct Board* Board_copy( struct Board* self );
+void Board_apply( struct Board* self, struct Board* other );
+bool Board_compare( struct Board* self, struct Board* other );
 
-void Board_initialize( struct Board* self );
+/// <summary>
+/// Initialise static structures. Need only be called once but should cope with multiple
+/// calls if it can
+/// </summary>
+static void Board_initialize();
 
 /// <summary>
 /// Reset the content of the board to nothing so it can be populated from a FEN string
@@ -125,12 +130,6 @@ struct MoveList* Board_generateMoves( struct Board* self );
 /// <param name="self">the board</param>
 /// <param name="move">the pseudolegal move</param>
 bool Board_makeMove( struct Board* self, struct Move* move );
-
-/// <summary>
-/// Reverts the board state
-/// </summary>
-/// <param name="self">the board</param>
-void Board_unmakeMove( struct Board* self );
 
 void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
 void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList );
