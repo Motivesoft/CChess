@@ -25,6 +25,17 @@ enum Piece
     UNUSED_3,
 };
 
+// To correspond with the Piece enum
+enum ColorlessPiece
+{
+    PAWN = 1,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING
+};
+
 struct PieceList
 {
     unsigned long long bbPawn;
@@ -34,7 +45,7 @@ struct PieceList
     unsigned long long bbQueen;
     unsigned long long bbKing;
     unsigned long long bbAll;
-    unsigned char king;
+    unsigned long king;
     bool kingsideCastling;
     bool queensideCastling;
 };
@@ -45,7 +56,7 @@ struct Board
     struct PieceList whitePieces;
     struct PieceList blackPieces;
     bool whiteToMove;
-    unsigned char enPassantSquare;
+    unsigned long enPassantSquare;
     unsigned short halfmoveClock;
     unsigned short fullmoveNumber;
 };
@@ -103,7 +114,7 @@ unsigned long fileFromIndex( unsigned long index );
 /// </summary>
 /// <param name="self">the board</param>
 /// <param name="index">the location</param>
-bool Board_emptySquare( struct Board* self, unsigned long index );
+bool Board_isEmptySquare( struct Board* self, unsigned long index );
 
 /// <summary>
 /// Is the piece at index a friendly piece?
@@ -120,6 +131,28 @@ bool Board_containsFriendly( struct Board* self, unsigned long index );
 bool Board_containsAttacker( struct Board* self, unsigned long index );
 
 bool Board_isPawn( enum Piece piece );
+bool Board_isKnight( enum Piece piece );
+bool Board_isBishop( enum Piece piece );
+bool Board_isRook( enum Piece piece );
+bool Board_isQueen( enum Piece piece );
+bool Board_isKing( enum Piece piece );
+
+/// <summary>
+/// Remove contents of square
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="pieceList">the current incumbent or NULL if unknown</param>
+/// <param name="index">the location</param>
+void Board_clearSquare( struct Board* self, struct PieceList* pieceList, unsigned long index );
+
+/// <summary>
+/// Remove contents of square
+/// </summary>
+/// <param name="self">the board</param>
+/// <param name="pieceList">the piece list or NULL for unknown</param>
+/// <param name="piece">the piece</param>
+/// <param name="index">the location</param>
+void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piece piece, unsigned long index );
 
 /// <summary>
 /// Generate the pseudolegal moves for the current position

@@ -16,8 +16,9 @@
 
 static const char pieceNames[] = " PNBRQK  pnbrqk ";
 
-// This is expected to be 0b00001000 but we should check
+// This is expected to give us 0b00001000 and 0b00000111
 static const char COLOR_BIT = BLACK_PAWN - WHITE_PAWN;
+static const char COLOR_MASK = BLACK_PAWN - WHITE_PAWN - 1;
 
 static unsigned long knightDirections[ 64 ][ 8 ];
 
@@ -372,31 +373,31 @@ void Board_exportBoard( struct Board* self, char* fen )
             fen[ fenIndex++ ] = '/';
         }
 
-        int Board_emptySquare = 0;
+        int Board_isEmptySquare = 0;
         for ( unsigned char file = 1; file <= 8; file++ )
         {
             unsigned char item = self->squares[ ( ( rank - 1 ) << 3 ) + ( file - 1 ) ];
 
             if ( item == EMPTY )
             {
-                Board_emptySquare++;
+                Board_isEmptySquare++;
             }
             else
             {
-                if ( Board_emptySquare > 0 )
+                if ( Board_isEmptySquare > 0 )
                 {
-                    fen[ fenIndex++ ] = '0' + Board_emptySquare;
-                    Board_emptySquare = 0;
+                    fen[ fenIndex++ ] = '0' + Board_isEmptySquare;
+                    Board_isEmptySquare = 0;
                 }
 
                 fen[ fenIndex++ ] = pieceNames[ item ];
             }
         }
 
-        if ( Board_emptySquare > 0 )
+        if ( Board_isEmptySquare > 0 )
         {
-            fen[ fenIndex++ ] = '0' + Board_emptySquare;
-            Board_emptySquare = 0;
+            fen[ fenIndex++ ] = '0' + Board_isEmptySquare;
+            Board_isEmptySquare = 0;
         }
     }
 
@@ -616,7 +617,7 @@ unsigned long fileFromIndex( unsigned long index )
     return index & 0b00000111;
 }
 
-bool Board_emptySquare( struct Board* self, unsigned long index )
+bool Board_isEmptySquare( struct Board* self, unsigned long index )
 {
     return self->squares[ index ] == EMPTY;
 }
@@ -624,7 +625,7 @@ bool Board_emptySquare( struct Board* self, unsigned long index )
 bool Board_containsFriendly( struct Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
-    if ( Board_emptySquare( self, index ) )
+    if ( Board_isEmptySquare( self, index ) )
     {
         return false;
     }
@@ -642,7 +643,7 @@ bool Board_containsFriendly( struct Board* self, unsigned long index )
 bool Board_containsAttacker( struct Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
-    if ( Board_emptySquare( self, index ) )
+    if ( Board_isEmptySquare( self, index ) )
     {
         return false;
     }
@@ -659,7 +660,138 @@ bool Board_containsAttacker( struct Board* self, unsigned long index )
 
 bool Board_isPawn( enum Piece piece )
 {
-    return piece == WHITE_PAWN || piece == BLACK_PAWN;
+    return ( piece & COLOR_MASK ) == PAWN;
+}
+
+bool Board_isKnight( enum Piece piece )
+{
+    return ( piece & COLOR_MASK ) == KNIGHT;
+}
+
+bool Board_isBishop( enum Piece piece )
+{
+    return ( piece & COLOR_MASK ) == BISHOP;
+}
+
+bool Board_isRook( enum Piece piece )
+{
+    return (piece & COLOR_MASK) == ROOK;
+}
+
+bool Board_isQueen( enum Piece piece )
+{
+    return ( piece & COLOR_MASK ) == QUEEN;
+}
+
+bool Board_isKing( enum Piece piece )
+{
+    return ( piece & COLOR_MASK ) == KING;
+}
+
+bool Board_isWhitePiece( enum Piece piece )
+{
+    return piece >= WHITE_PAWN && piece <= WHITE_KING;
+}
+
+bool Board_isBlackPiece( enum Piece piece )
+{
+    return piece >= BLACK_PAWN && piece <= BLACK_KING;
+}
+
+void Board_clearSquare( struct Board* self, struct PieceList* pieceList, unsigned long index )
+{
+    if ( Board_isEmptySquare( self, index ) )
+    {
+        return;
+    }
+
+    if ( pieceList == NULL )
+    {
+        // We already know the square isn't empty, so one of these is right
+        if ( Board_isWhitePiece( self->squares[ index ] ) )
+        {
+            Board_clearSquare( self, &self->whitePieces, index );
+        }
+        else
+        {
+            Board_clearSquare( self, &self->blackPieces, index );
+        }
+    }
+    else
+    {
+        const unsigned long long mask = 1ull << index;
+
+        self->squares[ index ] = EMPTY;
+
+        // Special case
+        if ( pieceList->bbKing && mask )
+        {
+            pieceList->bbKing ^= mask;
+            pieceList->king = OFF_BOARD;
+        }
+        else
+        {
+            pieceList->bbPawn ^= mask;
+            pieceList->bbKnight ^= mask;
+            pieceList->bbBishop ^= mask;
+            pieceList->bbRook ^= mask;
+            pieceList->bbQueen ^= mask;
+        }
+
+        pieceList->bbAll ^= mask;
+    }
+}
+
+void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piece piece, unsigned long index )
+{
+    // Precaution, hopefully not too costly
+    if ( !Board_isEmptySquare( self, index ) )
+    {
+        Board_clearSquare( self, NULL, index );
+    }
+
+    if ( pieceList == NULL )
+    {
+        if ( Board_isWhitePiece( piece ) )
+        {
+            Board_setSquare( self, &self->whitePieces, piece, index );
+        }
+        else
+        {
+            Board_setSquare( self, &self->blackPieces, piece, index );
+        }
+    }
+    else
+    {
+        const unsigned long long mask = 1ull << index;
+
+        self->squares[ index ] = piece;
+
+        switch ( piece & COLOR_MASK )
+        {
+            case PAWN:
+                pieceList->bbPawn ^= index;
+                break;
+            case KNIGHT:
+                pieceList->bbKnight ^= index;
+                break;
+            case BISHOP:
+                pieceList->bbBishop ^= index;
+                break;
+            case ROOK:
+                pieceList->bbRook ^= index;
+                break;
+            case QUEEN:
+                pieceList->bbQueen ^= index;
+                break;
+            case KING:
+                pieceList->bbKing |= index;
+                pieceList->king = index;
+                break;
+        }
+
+        pieceList->bbAll ^= index;
+    }
 }
 
 bool Board_makeMove( struct Board* self, struct Move* move )
@@ -676,30 +808,33 @@ bool Board_makeMove( struct Board* self, struct Move* move )
 
     // Steps
     // - remove any piece being captured from bb and from squares
-    if ( !Board_emptySquare( self, to ) )
+    //   - include pawn captured by enPassant (which won't be on "to" square)
+    if ( !Board_isEmptySquare( self, to ) )
     {
         // Capture - remove enemy piece from the board
-        self->squares[ to ] = EMPTY;
-        attackerPieces->bbPawn ^= to;
-        attackerPieces->bbKnight ^= to;
-        attackerPieces->bbBishop ^= to;
-        attackerPieces->bbRook ^= to;
-        attackerPieces->bbQueen ^= to;
-        attackerPieces->bbKing ^= to;
-        attackerPieces->bbAll ^= to;
+        // We presumably don't need to care about the king in the attackerPieces structure as we will not actually be capturing it
+        Board_clearSquare( self, attackerPieces, to );
     }
     else if ( to == self->enPassantSquare && Board_isPawn( fromPiece ) )
     {
         // enPassant capture - remove enemy piece (pawn) from the board
         const enPassantAttackerIndex = self->whiteToMove ? self->enPassantSquare - 8 : self->enPassantSquare + 8;
 
-        self->squares[ enPassantAttackerIndex ] = EMPTY;
-        attackerPieces->bbPawn ^= enPassantAttackerIndex;
-        attackerPieces->bbAll ^= enPassantAttackerIndex;
+        Board_clearSquare( self, attackerPieces, enPassantAttackerIndex );
     }
 
-    //   - include pawn captured by enPassant (which won't be on "to" square)
     // - lift piece from "from" and put it on "to" in both bb and squares (and king if appropriate)
+    Board_clearSquare( self, friendlyPieces, from );
+
+    if ( Move_isPromotion( move ) )
+    {
+        Board_setSquare( self, friendlyPieces, Move_promotion( move ), to);
+    }
+    else
+    {
+        Board_setSquare( self, friendlyPieces, fromPiece, to );
+    }
+
     //   - replace "to" piece in the case of promotion
     // - clear enPassant and set to new value if required
     // - move rook if castling in both bb and squares
