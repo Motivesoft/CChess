@@ -24,17 +24,12 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
 {
     LOG_DEBUG( "perft with depth %d and FEN: %s", depth, fen );
 
-    struct Board* board = Board_create( fen );
-
-    if ( board == NULL )
-    {
-        LOG_ERROR( "Cannot allocate memory for perft test" );
-        return;
-    }
+    Board board;
+    Board_create( &board, fen );
     
     clock_t start = clock();
 
-    unsigned long count = Perft_run( board, depth, runtimeSetup->debug );
+    unsigned long count = Perft_run( &board, depth, runtimeSetup->debug );
 
     clock_t end = clock();
 
@@ -87,12 +82,12 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
     }
 }
 
-unsigned long Perft_run( struct Board* board, int depth, bool divide )
+unsigned long Perft_run( Board* board, int depth, bool divide )
 {
     return divide ? Perft_divide( board, depth ) : Perft_loop( board, depth );
 }
 
-unsigned long Perft_loop( struct Board* board, int depth )
+unsigned long Perft_loop( Board* board, int depth )
 {
     if ( depth == 0 )
     {
@@ -111,7 +106,8 @@ unsigned long Perft_loop( struct Board* board, int depth )
         return moveList.count;
     }
 
-    struct Board* copy = Board_copy( board );
+    Board copy;
+    Board_copy( board, &copy );
 
     for ( unsigned char loop = 0; loop < moveList.count; loop++ )
     {
@@ -120,14 +116,13 @@ unsigned long Perft_loop( struct Board* board, int depth )
             nodes += Perft_loop( board, depth - 1 );
         }
 
-        Board_apply( board, copy );
+        Board_apply( board, &copy );
     }
-    Board_destroy( copy );
 
     return nodes;
 }
 
-unsigned long Perft_divide( struct Board* board, int depth )
+unsigned long Perft_divide( Board* board, int depth )
 {
     if ( depth == 0 )
     {
@@ -144,7 +139,8 @@ unsigned long Perft_divide( struct Board* board, int depth )
     moveList.count = 0;
     Board_generateMoves( board, &moveList );
 
-    struct Board* copy = Board_copy( board );
+    Board copy;
+    Board_copy( board, &copy );
 
     for ( unsigned char loop = 0; loop < moveList.count; loop++ )
     {
@@ -159,9 +155,8 @@ unsigned long Perft_divide( struct Board* board, int depth )
             printf( "  %s : %d - %s\n", moveString, divideNodes, fenString );
         }
 
-        Board_apply( board, copy );
+        Board_apply( board, &copy );
     }
-    Board_destroy( copy );
 
     return nodes;
 }

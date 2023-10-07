@@ -23,66 +23,51 @@ static const char COLOR_MASK = BLACK_PAWN - WHITE_PAWN - 1;
 static unsigned long knightDirections[ 64 ][ 8 ];
 static unsigned long kingDirections[ 64 ][ 8 ];
 
-struct Board* Board_create( const char* fen )
+void Board_create( Board* board, const char* fen )
 {
-    struct Board* board = malloc( sizeof( struct Board ) );
+    Board_initialize( board );
+    Board_clearBoard( board );
 
-    if ( board != NULL )
+    // FEN string is multiple space-separated sections as:
+    // - piece layout
+    // - active color
+    // - castling rights
+    // - en passant square
+    // - halfmove clock (will sometimes be absent - e.g. in epd strings)
+    // - fullmove number (will sometimes be absent - e.g. in epd strings)
+    //
+    // As UCI is a programmatic API, it is safe to assume the FEN string is valid
+
+    // Set these to defaults in case they are not specified in the string
+    FenProcessor fenProcessors[] =
     {
-        Board_initialize( board );
-        Board_clearBoard( board );
+        Board_processBoardLayout,
+        Board_processActiveColor,
+        Board_processCastlingRights,
+        Board_processEnPassantSquare,
+        Board_processHalfmoveClock,
+        Board_processFullmoveNumber,
+    };
+    unsigned short processor = 0;
 
-        // FEN string is multiple space-separated sections as:
-        // - piece layout
-        // - active color
-        // - castling rights
-        // - en passant square
-        // - halfmove clock (will sometimes be absent - e.g. in epd strings)
-        // - fullmove number (will sometimes be absent - e.g. in epd strings)
-        //
-        // As UCI is a programmatic API, it is safe to assume the FEN string is valid
-
-        // Set these to defaults in case they are not specified in the string
-        FenProcessor fenProcessors[] =
-        {
-            Board_processBoardLayout,
-            Board_processActiveColor,
-            Board_processCastlingRights,
-            Board_processEnPassantSquare,
-            Board_processHalfmoveClock,
-            Board_processFullmoveNumber,
-        };
-        unsigned short processor = 0;
-
-        char* fenCopy = _strdup( fen );
-        char* section;
-        char* nextToken = NULL;
-        section = strtok_s( fenCopy, " ", &nextToken );
+    char* fenCopy = _strdup( fen );
+    char* section;
+    char* nextToken = NULL;
+    section = strtok_s( fenCopy, " ", &nextToken );
         
-        while ( section != NULL )
-        {
-            fenProcessors[ processor++ ]( board, section );
+    while ( section != NULL )
+    {
+        fenProcessors[ processor++ ]( board, section );
 
-            section = strtok_s( NULL, " ", &nextToken );
-        }
-
-        free( fenCopy );
+        section = strtok_s( NULL, " ", &nextToken );
     }
+
+    free( fenCopy );
 
     Board_printBoard( board );
     char x[ 256 ];
     Board_exportBoard( board, x );
     printf( "%s\n", x );
-
-    return board;
-}
-
-void Board_destroy( struct Board* self )
-{
-    if ( self != NULL )
-    {
-        free( self );
-    }
 }
 
 static void Board_initialize()
@@ -168,7 +153,7 @@ static void Board_initialize()
     }
 }
 
-void Board_clearBoard( struct Board* self )
+void Board_clearBoard( Board* self )
 {
     self->whitePieces.bbPawn = 0;
     self->whitePieces.bbKnight = 0;
@@ -206,7 +191,7 @@ void Board_clearBoard( struct Board* self )
     }
 }
 
-void Board_processBoardLayout( struct Board* self, const char* fenSection ) 
+void Board_processBoardLayout( Board* self, const char* fenSection ) 
 {
     int rank = 7;
     int file = 0;
@@ -312,12 +297,12 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
     free( section );
 }
 
-void Board_processActiveColor( struct Board* self, const char* fenSection ) 
+void Board_processActiveColor( Board* self, const char* fenSection ) 
 {
     self->whiteToMove = ( fenSection[ 0 ] == 'w' );
 }
 
-void Board_processCastlingRights( struct Board* self, const char* fenSection ) 
+void Board_processCastlingRights( Board* self, const char* fenSection ) 
 {
     if ( fenSection[ 0 ] != '-' )
     {
@@ -347,7 +332,7 @@ void Board_processCastlingRights( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_processEnPassantSquare( struct Board* self, const char* fenSection ) 
+void Board_processEnPassantSquare( Board* self, const char* fenSection ) 
 {
     if ( fenSection[ 0 ] != '-' )
     {
@@ -355,7 +340,7 @@ void Board_processEnPassantSquare( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_processHalfmoveClock( struct Board* self, const char* fenSection ) 
+void Board_processHalfmoveClock( Board* self, const char* fenSection ) 
 {
     if ( fenSection != NULL )
     {
@@ -363,7 +348,7 @@ void Board_processHalfmoveClock( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_processFullmoveNumber( struct Board* self, const char* fenSection ) 
+void Board_processFullmoveNumber( Board* self, const char* fenSection ) 
 {
     if ( fenSection != NULL )
     {
@@ -371,7 +356,7 @@ void Board_processFullmoveNumber( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_printBoard( struct Board* self )
+void Board_printBoard( Board* self )
 {
     printf( "     A   B   C   D   E   F   G   H \n" );
     printf( "   +---+---+---+---+---+---+---+---+\n" );
@@ -404,7 +389,7 @@ void Board_printBoard( struct Board* self )
     printf( "     A   B   C   D   E   F   G   H \n" );
 }
 
-void Board_exportBoard( struct Board* self, char* fen )
+void Board_exportBoard( Board* self, char* fen )
 {
     int fenIndex = 0;
     for ( unsigned char rank = 8; rank > 0; rank-- )
@@ -512,7 +497,7 @@ void Board_exportMove( Move move, char* moveString )
     moveString[ index ] = '\0';
 }
 
-MoveList* Board_generateMoves( struct Board* self, MoveList* moveList )
+MoveList* Board_generateMoves( Board* self, MoveList* moveList )
 {
     Board_generatePawnMoves( self, moveList );
     Board_generateKnightMoves( self, moveList );
@@ -521,12 +506,12 @@ MoveList* Board_generateMoves( struct Board* self, MoveList* moveList )
     return moveList;
 }
 
-void Board_generatePawnMoves( struct Board* self, MoveList* moveList )
+void Board_generatePawnMoves( Board* self, MoveList* moveList )
 {
     static const unsigned long whitePromotionPieces[] = { WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN };
     static const unsigned long blackPromotionPieces[] = { BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN };
 
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
     const unsigned long oneStep = self->whiteToMove ? +8 : -8;
     const unsigned long twoStep = self->whiteToMove ? +16 : -16;
@@ -620,9 +605,9 @@ void Board_generatePawnMoves( struct Board* self, MoveList* moveList )
     }
 }
 
-void Board_generateKnightMoves( struct Board* self, MoveList* moveList )
+void Board_generateKnightMoves( Board* self, MoveList* moveList )
 {
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
     unsigned long long pieces = friendlyPieces->bbKnight;
 
@@ -647,10 +632,10 @@ void Board_generateKnightMoves( struct Board* self, MoveList* moveList )
     }
 }
 
-void Board_generateKingMoves( struct Board* self, MoveList* moveList )
+void Board_generateKingMoves( Board* self, MoveList* moveList )
 {
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
-    const struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
     unsigned long index = friendlyPieces->king;
     unsigned long destination;
@@ -735,12 +720,12 @@ unsigned long Board_fileFromIndex( unsigned long index )
     return index & 0b00000111;
 }
 
-bool Board_isEmptySquare( struct Board* self, unsigned long index )
+bool Board_isEmptySquare( Board* self, unsigned long index )
 {
     return self->squares[ index ] == EMPTY;
 }
 
-bool Board_containsFriendly( struct Board* self, unsigned long index )
+bool Board_containsFriendly( Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
     if ( Board_isEmptySquare( self, index ) )
@@ -758,7 +743,7 @@ bool Board_containsFriendly( struct Board* self, unsigned long index )
     }
 }
 
-bool Board_containsAttacker( struct Board* self, unsigned long index )
+bool Board_containsAttacker( Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
     if ( Board_isEmptySquare( self, index ) )
@@ -816,7 +801,7 @@ bool Board_isBlackPiece( enum Piece piece )
     return piece >= BLACK_PAWN && piece <= BLACK_KING;
 }
 
-void Board_clearSquare( struct Board* self, struct PieceList* pieceList, unsigned long index )
+void Board_clearSquare( Board* self, PieceList* pieceList, unsigned long index )
 {
     if ( Board_isEmptySquare( self, index ) )
     {
@@ -860,7 +845,7 @@ void Board_clearSquare( struct Board* self, struct PieceList* pieceList, unsigne
     }
 }
 
-void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piece piece, unsigned long index )
+void Board_setSquare( Board* self, PieceList* pieceList, enum Piece piece, unsigned long index )
 {
     // Precaution, hopefully not too costly
     if ( !Board_isEmptySquare( self, index ) )
@@ -912,12 +897,12 @@ void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piec
     }
 }
 
-bool Board_makeMove( struct Board* self, Move move )
+bool Board_makeMove( Board* self, Move move )
 {
     // Return false if it becomes apparent that the move is not legal
 
-    struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
-    struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+    PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
     unsigned long from = Move_from( move );
     unsigned long to = Move_to( move );
@@ -1044,25 +1029,18 @@ bool Board_makeMove( struct Board* self, Move move )
     return true;
 }
 
-struct Board* Board_copy( struct Board* self ) 
+void Board_copy( Board* self, Board* copy ) 
 {
-    struct Board* other = malloc( sizeof( struct Board ) );
-
-    if ( other != NULL )
-    {
-        memcpy( other, self, sizeof( struct Board ) );
-    }
-
-    return other;
+    memcpy( copy, self, sizeof( Board ) );
 }
 
-void Board_apply( struct Board* self, struct Board* other ) 
+void Board_apply( Board* self, Board* other ) 
 {
-    memcpy( self, other, sizeof( struct Board ) );
+    memcpy( self, other, sizeof( Board ) );
 }
 
-bool Board_compare( struct Board* self, struct Board* other ) 
+bool Board_compare( Board* self, Board* other ) 
 {
-    return memcmp( self, other, sizeof( struct Board ) ) == 0;
+    return memcmp( self, other, sizeof( Board ) ) == 0;
 }
 
