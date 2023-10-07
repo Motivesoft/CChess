@@ -1,7 +1,7 @@
 #pragma once
 
 /// <summary>
-/// moveBits is special|promotion|from|to
+/// Move is special|promotion|from|to
 /// 0b11111111111111110000000000000000 - special bits
 /// 0b00000000000000001111000000000000 - promotion piece
 /// 0b00000000000000000000111111000000 - from bits
@@ -11,18 +11,13 @@
 /// 0b00000000000000000000000000111000 - to rank
 /// 0b00000000000000000000000000000111 - to file
 /// </summary>
-//struct Move
-//{
-//    unsigned int moveBits;
-//};
 
 typedef unsigned int Move;
-
-struct MoveList
+typedef struct
 {
-    Move moves[ 256 ];
+    Move moves[ 256 ]; 
     unsigned char count;
-};
+} MoveList;
 
 // Move methods
 
@@ -41,7 +36,4 @@ bool Move_isPromotion( Move self );
 
 // MoveList methods
 
-struct MoveList* MoveList_createMoveList();
-void MoveList_destroy( struct MoveList* self );
-
-void MoveList_addMove( struct MoveList* self, Move move );
+void MoveList_addMove( MoveList* self, Move move );

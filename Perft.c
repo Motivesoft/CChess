@@ -101,19 +101,21 @@ unsigned long Perft_loop( struct Board* board, int depth )
 
     unsigned int nodes = 0;
 
-    struct MoveList* moveList = Board_generateMoves( board );
+    MoveList moveList;
+    moveList.count = 0;
+    Board_generateMoves( board, &moveList );
 
     // This is a cheating optimisation
     if ( depth == 1 )
     {
-        return moveList->count;
+        return moveList.count;
     }
 
     struct Board* copy = Board_copy( board );
 
-    for ( unsigned char loop = 0; loop < moveList->count; loop++ )
+    for ( unsigned char loop = 0; loop < moveList.count; loop++ )
     {
-        if ( Board_makeMove( board, moveList->moves[ loop ] ) )
+        if ( Board_makeMove( board, moveList.moves[ loop ] ) )
         {
             nodes += Perft_loop( board, depth - 1 );
         }
@@ -121,8 +123,6 @@ unsigned long Perft_loop( struct Board* board, int depth )
         Board_apply( board, copy );
     }
     Board_destroy( copy );
-
-    MoveList_destroy( moveList );
 
     return nodes;
 }
@@ -140,18 +140,20 @@ unsigned long Perft_divide( struct Board* board, int depth )
     char moveString[ 10 ];
     char fenString[ 256 ];
 
-    struct MoveList* moveList = Board_generateMoves( board );
+    MoveList moveList;
+    moveList.count = 0;
+    Board_generateMoves( board, &moveList );
 
     struct Board* copy = Board_copy( board );
 
-    for ( unsigned char loop = 0; loop < moveList->count; loop++ )
+    for ( unsigned char loop = 0; loop < moveList.count; loop++ )
     {
-        if ( Board_makeMove( board, moveList->moves[ loop ] ) )
+        if ( Board_makeMove( board, moveList.moves[ loop ] ) )
         {
             divideNodes = Perft_loop( board, depth - 1 );
             nodes += divideNodes;
 
-            Board_exportMove( moveList->moves[ loop ], moveString );
+            Board_exportMove( moveList.moves[ loop ], moveString );
             Board_exportBoard( board, fenString );
 
             printf( "  %s : %d - %s\n", moveString, divideNodes, fenString );
@@ -160,8 +162,6 @@ unsigned long Perft_divide( struct Board* board, int depth )
         Board_apply( board, copy );
     }
     Board_destroy( copy );
-
-    MoveList_destroy( moveList );
 
     return nodes;
 }

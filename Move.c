@@ -21,18 +21,6 @@ Move Move_createPromotionMove( unsigned long from, unsigned long to, unsigned lo
     return (promotion << 12) | Move_createMove( from, to );
 }
 
-struct MoveList* MoveList_createMoveList()
-{
-    struct MoveList* moveList = malloc( sizeof( struct MoveList ) );
-
-    if ( moveList != NULL )
-    {
-        moveList->count = 0;
-    }
-
-    return moveList;
-}
-
 unsigned long Move_from( Move self ) 
 {
     return (self & 0b00000000000000000000111111000000) >> 6;
@@ -75,12 +63,7 @@ bool Move_isPromotion( Move self )
 
 // MoveList
 
-void MoveList_destroy( struct MoveList* self )
-{
-    free( self );
-}
-
-void MoveList_addMove( struct MoveList* self, Move move )
+void MoveList_addMove( MoveList* self, Move move )
 {
     self->moves[ self->count++ ] = move;
 }

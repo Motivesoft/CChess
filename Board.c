@@ -512,10 +512,8 @@ void Board_exportMove( Move move, char* moveString )
     moveString[ index ] = '\0';
 }
 
-struct MoveList* Board_generateMoves( struct Board* self )
+MoveList* Board_generateMoves( struct Board* self, MoveList* moveList )
 {
-    struct MoveList* moveList = MoveList_createMoveList();
-
     Board_generatePawnMoves( self, moveList );
     Board_generateKnightMoves( self, moveList );
     Board_generateKingMoves( self, moveList );
@@ -523,7 +521,7 @@ struct MoveList* Board_generateMoves( struct Board* self )
     return moveList;
 }
 
-void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
+void Board_generatePawnMoves( struct Board* self, MoveList* moveList )
 {
     static const unsigned long whitePromotionPieces[] = { WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN };
     static const unsigned long blackPromotionPieces[] = { BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN };
@@ -622,7 +620,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
     }
 }
 
-void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
+void Board_generateKnightMoves( struct Board* self, MoveList* moveList )
 {
     const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
@@ -649,7 +647,7 @@ void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
     }
 }
 
-void Board_generateKingMoves( struct Board* self, struct MoveList* moveList )
+void Board_generateKingMoves( struct Board* self, MoveList* moveList )
 {
     const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
     const struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;

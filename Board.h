@@ -170,7 +170,7 @@ void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piec
 /// Generate the pseudolegal moves for the current position
 /// </summary>
 /// <param name="self">the board</param>
-struct MoveList* Board_generateMoves( struct Board* self );
+MoveList* Board_generateMoves( struct Board* self, MoveList* moveList );
 
 /// <summary>
 /// Makes a move but returns false if the move is illegal
@@ -179,6 +179,6 @@ struct MoveList* Board_generateMoves( struct Board* self );
 /// <param name="move">the pseudolegal move</param>
 bool Board_makeMove( struct Board* self, Move move );
 
-void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
-void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList );
-void Board_generateKingMoves( struct Board* self, struct MoveList* moveList );
+void Board_generatePawnMoves( struct Board* self, MoveList* moveList );
+void Board_generateKnightMoves( struct Board* self, MoveList* moveList );
+void Board_generateKingMoves( struct Board* self, MoveList* moveList );
