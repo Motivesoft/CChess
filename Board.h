@@ -107,7 +107,7 @@ void Board_printBoard( struct Board* self );
 /// <param name="fen">the buffer to receive the FEN output</param>
 void Board_exportBoard( struct Board* self, char* fen );
 
-void Board_exportMove( struct Move* move, char* moveString );
+void Board_exportMove( Move move, char* moveString );
 
 typedef void ( *FenProcessor )( struct Board* self, const char* fenSection );
 
@@ -177,7 +177,7 @@ struct MoveList* Board_generateMoves( struct Board* self );
 /// </summary>
 /// <param name="self">the board</param>
 /// <param name="move">the pseudolegal move</param>
-bool Board_makeMove( struct Board* self, struct Move* move );
+bool Board_makeMove( struct Board* self, Move move );
 
 void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList );
 void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList );

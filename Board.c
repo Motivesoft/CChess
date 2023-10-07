@@ -498,7 +498,7 @@ void Board_exportBoard( struct Board* self, char* fen )
     strcat_s( fen, strlen( fen ) + BUFFERSIZE, buffer );
 }
 
-void Board_exportMove( struct Move* move, char* moveString )
+void Board_exportMove( Move move, char* moveString )
 {
     unsigned char index = 0;
     moveString[ index++ ] = (char)('a' + Move_fromFile( move ) );
@@ -914,7 +914,7 @@ void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piec
     }
 }
 
-bool Board_makeMove( struct Board* self, struct Move* move )
+bool Board_makeMove( struct Board* self, Move move )
 {
     // Return false if it becomes apparent that the move is not legal
 
