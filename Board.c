@@ -543,19 +543,19 @@ void Board_generatePawnMoves( Board* self, MoveList* moveList )
             {
                 for ( unsigned short loop = 0; loop < 4; loop++ )
                 {
-                    MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop] ) );
+                    Board_addMove( self, moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop] ) );
                 }
             }
             else
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
 
                 // Those elible for a single step forward can maybe also do two steps
      
                 destination = index + twoStep;
                 if ( Board_rankFromIndex( index ) == homeRank && self->squares[ destination ] == EMPTY )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -565,7 +565,7 @@ void Board_generatePawnMoves( Board* self, MoveList* moveList )
             destination = index + captureL;
             if ( destination == self->enPassantSquare )
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
             else if ( Board_containsAttacker( self, destination ) )
             {
@@ -573,12 +573,12 @@ void Board_generatePawnMoves( Board* self, MoveList* moveList )
                 {
                     for ( unsigned short loop = 0; loop < 4; loop++ )
                     {
-                        MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
+                        Board_addMove( self, moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
                     }
                 }
                 else
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -588,7 +588,7 @@ void Board_generatePawnMoves( Board* self, MoveList* moveList )
             destination = index + captureR;
             if ( destination == self->enPassantSquare )
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
             else if ( Board_containsAttacker( self, destination ) )
             {
@@ -596,12 +596,12 @@ void Board_generatePawnMoves( Board* self, MoveList* moveList )
                 {
                     for ( unsigned short loop = 0; loop < 4; loop++ )
                     {
-                        MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
+                        Board_addMove( self, moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
                     }
                 }
                 else
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -628,7 +628,7 @@ void Board_generateKnightMoves( Board* self, MoveList* moveList )
                 destination = index + directions[ loop ];
                 if ( !Board_containsFriendly( self, destination ) )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -686,14 +686,14 @@ void Board_generateBishopMoves( Board* self, MoveList* moveList )
                 }
                 else if ( Board_containsAttacker( self, destination ) )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
 
                     // Stop travelling in this direction - capture made
                     break;
                 }
                 else // Empty square - note the move and keep looking
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -751,14 +751,14 @@ void Board_generateRookMoves( Board* self, MoveList* moveList )
                 }
                 else if ( Board_containsAttacker( self, destination ) )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
 
                     // Stop travelling in this direction - capture made
                     break;
                 }
                 else // Empty square - note the move and keep looking
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -820,14 +820,14 @@ void Board_generateQueenMoves( Board* self, MoveList* moveList )
                 }
                 else if ( Board_containsAttacker( self, destination ) )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
 
                     // Stop travelling in this direction - capture made
                     break;
                 }
                 else // Empty square - note the move and keep looking
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -864,7 +864,7 @@ void Board_generateKingMoves( Board* self, MoveList* moveList )
 
             if ( !Board_containsFriendly( self, destination ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
 
         }
@@ -881,14 +881,14 @@ void Board_generateKingMoves( Board* self, MoveList* moveList )
         {
             if ( Board_isEmptySquare( self, F1 ) && Board_isEmptySquare( self, G1 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, G1 ) );
+                Board_addMove( self, moveList, Move_createMove( index, G1 ) );
             }
         }
         else
         {
             if ( Board_isEmptySquare( self, F8 ) && Board_isEmptySquare( self, G8 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, G8 ) );
+                Board_addMove( self, moveList, Move_createMove( index, G8 ) );
             }
         }
     }
@@ -899,14 +899,14 @@ void Board_generateKingMoves( Board* self, MoveList* moveList )
         {
             if ( Board_isEmptySquare( self, B1 ) && Board_isEmptySquare( self, C1 ) && Board_isEmptySquare( self, D1 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, C1 ) );
+                Board_addMove( self, moveList, Move_createMove( index, C1 ) );
             }
         }
         else
         {
             if ( Board_isEmptySquare( self, B8 ) && Board_isEmptySquare( self, C8 ) && Board_isEmptySquare( self, D8 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, C8 ) );
+                Board_addMove( self, moveList, Move_createMove( index, C8 ) );
             }
         }
     }
@@ -1248,3 +1248,126 @@ bool Board_compare( Board* self, Board* other )
     return memcmp( self, other, sizeof( Board ) ) == 0;
 }
 
+bool Board_isAttacked( Board* self, unsigned long index )
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    const long pieceRank = Board_rankFromIndex( index );
+    const long pieceFile = Board_fileFromIndex( index );
+
+    const short directionOfTravel = self->whiteToMove ? +1 : -1;
+
+    // Knight attack
+    unsigned long* directions = knightDirections[ index ];
+    for ( short loop = 0; loop < 8; loop++ )
+    {
+        if ( directions[ loop ] != 0 )
+        {
+            unsigned long long target = 1ull << ( index + directions[ loop ] );
+
+            if ( attackerPieces->bbKnight & target )
+            {
+                return true;
+            }
+        }
+    }
+    
+    // Use one method to check for Pawn, Bishop, Rook, Queen, King attack
+    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    {
+        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        {
+            if ( rankOffset == 0 && fileOffset == 0 )
+            {
+                continue;
+            }
+
+            for ( short distance = 1; distance < 8; distance++ )
+            {
+                const long targetRank = pieceRank + (distance * rankOffset);
+                const long targetFile = pieceFile + (distance * fileOffset);
+                const unsigned long targetIndex = ( targetRank << 3 ) + targetFile;
+                const unsigned long long targetBit = 1ull << targetIndex;
+
+                if ( targetRank < 0 || targetRank > 7 )
+                {
+                    break;
+                }
+
+                if ( targetFile < 0 || targetFile > 7 )
+                {
+                    break;
+                }
+
+                // If we hit a friendly piece, then the search in this direction is over
+
+                if ( Board_containsFriendly( self, targetIndex ) )
+                {
+                    break;
+                }
+
+                // If we hit an empty square, continue the search
+
+                if ( Board_isEmptySquare( self, targetIndex ) )
+                {
+                    continue;
+                }
+
+                // If we are right next to the original piece, then check if we're next to the opponent king
+
+                if ( distance == 1 )
+                {
+                    // Test king
+                    if ( attackerPieces->king == targetIndex )
+                    {
+                        return true;
+                    }
+                }
+
+                // Check the direction of travel to see if we encounter a piece that could attack is in this direction
+
+                if ( rankOffset == 0 || fileOffset == 0 )
+                {
+                    // Test horizontal/vertical - rook or queen
+                    
+                    if ( targetBit & ( attackerPieces->bbRook | attackerPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Test bishop or queen
+
+                    if ( targetBit & ( attackerPieces->bbBishop | attackerPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+
+                    // With a bit more logic, we can also test pawn
+                    // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
+                    // an assessment of whether, if the move was made, the pawn could take us
+
+                    if ( rankOffset == directionOfTravel && distance == 1 )
+                    {
+                        if ( targetBit & attackerPieces->bbPawn )
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+void Board_addMove( Board* self, MoveList* moveList, Move move )
+{
+    if ( !Board_isAttacked( self, self->whiteToMove ? self->whitePieces.king : self->blackPieces.king ) )
+    {
+        MoveList_addMove( moveList, move );
+    }
+}

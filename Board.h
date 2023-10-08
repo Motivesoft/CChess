@@ -184,3 +184,13 @@ void Board_generateBishopMoves( Board* self, MoveList* moveList );
 void Board_generateRookMoves( Board* self, MoveList* moveList );
 void Board_generateQueenMoves( Board* self, MoveList* moveList );
 void Board_generateKingMoves( Board* self, MoveList* moveList );
+
+/// <summary>
+/// Returns whether the provided square is under attack by the oppponent
+/// </summary>
+bool Board_isAttacked( Board* self, unsigned long index );
+
+/// <summary>
+/// Calls MoveList_addMove iff the move is legal (doesn't leave the king in check)
+/// </summary>
+void Board_addMove( Board* self, MoveList* moveList, Move move );
