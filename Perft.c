@@ -29,13 +29,13 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
     
     clock_t start = clock();
 
-    unsigned long count = Perft_run( &board, depth, runtimeSetup->debug );
+    unsigned long long count = Perft_run( &board, depth, runtimeSetup->debug );
 
     clock_t end = clock();
 
     float totalTime = (float) ( end - start ) / CLOCKS_PER_SEC;
     float nps = count / totalTime;
-    fprintf( runtimeSetup->logger, "Move count: %u in %0.3fs (%0.0f nps)\n", count, totalTime, nps );
+    fprintf( runtimeSetup->logger, "Move count: %llu in %0.3fs (%0.0f nps)\n", count, totalTime, nps );
 }
 
 void Perft_fen( struct RuntimeSetup* runtimeSetup, const char* fenWithResults )
@@ -82,19 +82,19 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
     }
 }
 
-unsigned long Perft_run( Board* board, int depth, bool divide )
+unsigned long long Perft_run( Board* board, int depth, bool divide )
 {
     return divide ? Perft_divide( board, depth ) : Perft_loop( board, depth );
 }
 
-unsigned long Perft_loop( Board* board, int depth )
+unsigned long long Perft_loop( Board* board, int depth )
 {
     if ( depth == 0 )
     {
         return 1;
     }
 
-    unsigned int nodes = 0;
+    unsigned long long nodes = 0;
 
     MoveList moveList;
     moveList.count = 0;
@@ -122,15 +122,15 @@ unsigned long Perft_loop( Board* board, int depth )
     return nodes;
 }
 
-unsigned long Perft_divide( Board* board, int depth )
+unsigned long long Perft_divide( Board* board, int depth )
 {
     if ( depth == 0 )
     {
         return 1;
     }
 
-    unsigned int nodes = 0;
-    unsigned int divideNodes = 0;
+    unsigned long long nodes = 0;
+    unsigned long long divideNodes = 0;
 
     char moveString[ 10 ];
     char fenString[ 256 ];
@@ -152,7 +152,7 @@ unsigned long Perft_divide( Board* board, int depth )
             Board_exportMove( moveList.moves[ loop ], moveString );
             Board_exportBoard( board, fenString );
 
-            printf( "  %s : %d - %s\n", moveString, divideNodes, fenString );
+            printf( "  %s : %llu - %s\n", moveString, divideNodes, fenString );
         }
 
         Board_apply( board, &copy );
