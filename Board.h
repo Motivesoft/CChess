@@ -180,4 +180,7 @@ bool Board_makeMove( Board* self, Move move );
 
 void Board_generatePawnMoves( Board* self, MoveList* moveList );
 void Board_generateKnightMoves( Board* self, MoveList* moveList );
+void Board_generateBishopMoves( Board* self, MoveList* moveList );
+void Board_generateRookMoves( Board* self, MoveList* moveList );
+void Board_generateQueenMoves( Board* self, MoveList* moveList );
 void Board_generateKingMoves( Board* self, MoveList* moveList );

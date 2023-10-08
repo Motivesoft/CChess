@@ -501,6 +501,9 @@ MoveList* Board_generateMoves( Board* self, MoveList* moveList )
 {
     Board_generatePawnMoves( self, moveList );
     Board_generateKnightMoves( self, moveList );
+    Board_generateBishopMoves( self, moveList );
+    Board_generateRookMoves( self, moveList );
+    Board_generateQueenMoves( self, moveList );
     Board_generateKingMoves( self, moveList );
 
     return moveList;
@@ -624,6 +627,205 @@ void Board_generateKnightMoves( Board* self, MoveList* moveList )
             {
                 destination = index + directions[ loop ];
                 if ( !Board_containsFriendly( self, destination ) )
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateBishopMoves( Board* self, MoveList* moveList ) 
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long long pieces = friendlyPieces->bbBishop;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        long pieceRank = Board_rankFromIndex( index );
+        long pieceFile = Board_fileFromIndex( index );
+
+        // Normal one-square moves diagonal
+        short vectors[][2] =
+        { 
+            {-1,-1},
+            {-1,+1},
+            {+1,-1},
+            {+1,+1},
+        };
+
+        for ( unsigned short vectorIndex = 0; vectorIndex < 4; vectorIndex++ )
+        {
+            for ( unsigned short distance = 1; distance < 8; distance++ )
+            {
+                long destinationRank = pieceRank + ( distance * vectors[ vectorIndex ][ 0 ] );
+                if ( destinationRank < 0 || destinationRank > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+                long destinationFile = pieceFile + ( distance * vectors[ vectorIndex ][ 1 ] );
+                if ( destinationFile < 0 || destinationFile > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+
+                destination = ( destinationRank << 3 ) + destinationFile;
+
+                if ( Board_containsFriendly( self, destination ) )
+                {
+                    // Stop travelling in this direction - friendly piece found
+                    break;
+                }
+                else if ( Board_containsAttacker( self, destination ) )
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+
+                    // Stop travelling in this direction - capture made
+                    break;
+                }
+                else // Empty square - note the move and keep looking
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateRookMoves( Board* self, MoveList* moveList ) 
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long long pieces = friendlyPieces->bbRook;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        long pieceRank = Board_rankFromIndex( index );
+        long pieceFile = Board_fileFromIndex( index );
+
+        // Normal one-square moves horizontal and vertical
+        short vectors[][ 2 ] =
+        {
+            {-1, 0},
+            { 0,-1},
+            { 0,+1},
+            {+1, 0},
+        };
+
+        for ( unsigned short vectorIndex = 0; vectorIndex < 4; vectorIndex++ )
+        {
+            for ( unsigned short distance = 1; distance < 8; distance++ )
+            {
+                long destinationRank = pieceRank + ( distance * vectors[ vectorIndex ][ 0 ] );
+                if ( destinationRank < 0 || destinationRank > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+                long destinationFile = pieceFile + ( distance * vectors[ vectorIndex ][ 1 ] );
+                if ( destinationFile < 0 || destinationFile > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+
+                destination = ( destinationRank << 3 ) + destinationFile;
+
+                if ( Board_containsFriendly( self, destination ) )
+                {
+                    // Stop travelling in this direction - friendly piece found
+                    break;
+                }
+                else if ( Board_containsAttacker( self, destination ) )
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+
+                    // Stop travelling in this direction - capture made
+                    break;
+                }
+                else // Empty square - note the move and keep looking
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateQueenMoves( Board* self, MoveList* moveList ) 
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long long pieces = friendlyPieces->bbQueen;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        long pieceRank = Board_rankFromIndex( index );
+        long pieceFile = Board_fileFromIndex( index );
+
+        // Normal one-square moves in any direction
+        short vectors[][ 2 ] =
+        {
+            {-1,-1},
+            {-1,+1},
+            {+1,-1},
+            {+1,+1},
+            {-1, 0},
+            { 0,-1},
+            { 0,+1},
+            {+1, 0},
+        };
+
+        for ( unsigned short vectorIndex = 0; vectorIndex < 8; vectorIndex++ )
+        {
+            for ( unsigned short distance = 1; distance < 8; distance++ )
+            {
+                long destinationRank = pieceRank + ( distance * vectors[ vectorIndex ][ 0 ] );
+                if ( destinationRank < 0 || destinationRank > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+                long destinationFile = pieceFile + ( distance * vectors[ vectorIndex ][ 1 ] );
+                if ( destinationFile < 0 || destinationFile > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+
+                destination = ( destinationRank << 3 ) + destinationFile;
+
+                if ( Board_containsFriendly( self, destination ) )
+                {
+                    // Stop travelling in this direction - friendly piece found
+                    break;
+                }
+                else if ( Board_containsAttacker( self, destination ) )
+                {
+                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+
+                    // Stop travelling in this direction - capture made
+                    break;
+                }
+                else // Empty square - note the move and keep looking
                 {
                     MoveList_addMove( moveList, Move_createMove( index, destination ) );
                 }
@@ -823,25 +1025,27 @@ void Board_clearSquare( Board* self, PieceList* pieceList, unsigned long index )
     else
     {
         const unsigned long long mask = 1ull << index;
+        const unsigned long long notmask = ~mask;
 
         self->squares[ index ] = EMPTY;
 
         // Special case
-        if ( pieceList->bbKing && mask )
+        if ( pieceList->bbKing & mask )
         {
-            pieceList->bbKing ^= mask;
+            pieceList->bbKing &= notmask;
             pieceList->king = OFF_BOARD;
         }
         else
         {
-            pieceList->bbPawn ^= mask;
-            pieceList->bbKnight ^= mask;
-            pieceList->bbBishop ^= mask;
-            pieceList->bbRook ^= mask;
-            pieceList->bbQueen ^= mask;
+
+            pieceList->bbPawn &= notmask;
+            pieceList->bbKnight &= notmask;
+            pieceList->bbBishop &= notmask;
+            pieceList->bbRook &= notmask;
+            pieceList->bbQueen &= notmask;
         }
 
-        pieceList->bbAll ^= mask;
+        pieceList->bbAll &= notmask;
     }
 }
 
