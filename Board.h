@@ -191,6 +191,11 @@ void Board_generateKingMoves( Board* self, MoveList* moveList );
 bool Board_isAttacked( Board* self, unsigned long index );
 
 /// <summary>
+/// Returns whether the provided square is under attack by the us
+/// </summary>
+bool Board_isAttacking( Board* self, unsigned long index );
+
+/// <summary>
 /// Calls MoveList_addMove iff the move is legal (doesn't leave the king in check)
 /// </summary>
 void Board_addMove( Board* self, MoveList* moveList, Move move );

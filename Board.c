@@ -499,12 +499,30 @@ void Board_exportMove( Move move, char* moveString )
 
 MoveList* Board_generateMoves( Board* self, MoveList* moveList )
 {
-    Board_generatePawnMoves( self, moveList );
-    Board_generateKnightMoves( self, moveList );
-    Board_generateBishopMoves( self, moveList );
-    Board_generateRookMoves( self, moveList );
-    Board_generateQueenMoves( self, moveList );
-    Board_generateKingMoves( self, moveList );
+    // Generate pseudolegal moves and then copy the legal ones into the provided list
+    MoveList pseudoLegalMoves;
+    pseudoLegalMoves.count = 0;
+
+    Board_generatePawnMoves( self, &pseudoLegalMoves );
+    Board_generateKnightMoves( self, &pseudoLegalMoves );
+    Board_generateBishopMoves( self, &pseudoLegalMoves );
+    Board_generateRookMoves( self, &pseudoLegalMoves );
+    Board_generateQueenMoves( self, &pseudoLegalMoves );
+    Board_generateKingMoves( self, &pseudoLegalMoves );
+
+    Board copy;
+    Board_copy( self, &copy );
+    for ( short loop = 0; loop < pseudoLegalMoves.count; loop++ )
+    {
+        Board_makeMove( self, pseudoLegalMoves.moves[ loop ] );
+
+        if ( !Board_isAttacking( self, self->whiteToMove ? self->blackPieces.king : self->whitePieces.king ) )
+        {
+            MoveList_addMove( moveList, pseudoLegalMoves.moves[ loop ] );
+        }
+
+        Board_apply( self, &copy );
+    }
 
     return moveList;
 }
@@ -866,7 +884,6 @@ void Board_generateKingMoves( Board* self, MoveList* moveList )
             {
                 Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
-
         }
     }
 
@@ -881,14 +898,21 @@ void Board_generateKingMoves( Board* self, MoveList* moveList )
         {
             if ( Board_isEmptySquare( self, F1 ) && Board_isEmptySquare( self, G1 ) )
             {
-                Board_addMove( self, moveList, Move_createMove( index, G1 ) );
+                // We can't castle out of, or through check, so test this
+                if ( !Board_isAttacked( self, E1 ) && !Board_isAttacked( self, F1 ) && !Board_isAttacked( self, G1 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, G1 ) );
+                }
             }
         }
         else
         {
             if ( Board_isEmptySquare( self, F8 ) && Board_isEmptySquare( self, G8 ) )
             {
-                Board_addMove( self, moveList, Move_createMove( index, G8 ) );
+                if ( !Board_isAttacked( self, E8 ) && !Board_isAttacked( self, F8 ) && !Board_isAttacked( self, G8 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, G8 ) );
+                }
             }
         }
     }
@@ -899,14 +923,20 @@ void Board_generateKingMoves( Board* self, MoveList* moveList )
         {
             if ( Board_isEmptySquare( self, B1 ) && Board_isEmptySquare( self, C1 ) && Board_isEmptySquare( self, D1 ) )
             {
-                Board_addMove( self, moveList, Move_createMove( index, C1 ) );
+                if ( !Board_isAttacked( self, E1 ) && !Board_isAttacked( self, D1 ) && !Board_isAttacked( self, C1 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, C1 ) );
+                }
             }
         }
         else
         {
             if ( Board_isEmptySquare( self, B8 ) && Board_isEmptySquare( self, C8 ) && Board_isEmptySquare( self, D8 ) )
             {
-                Board_addMove( self, moveList, Move_createMove( index, C8 ) );
+                if ( !Board_isAttacked( self, E8 ) && !Board_isAttacked( self, D8 ) && !Board_isAttacked( self, C8 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, C8 ) );
+                }
             }
         }
     }
@@ -1364,10 +1394,123 @@ bool Board_isAttacked( Board* self, unsigned long index )
     return false;
 }
 
+bool Board_isAttacking( Board* self, unsigned long index )
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    const long pieceRank = Board_rankFromIndex( index );
+    const long pieceFile = Board_fileFromIndex( index );
+
+    const short directionOfTravel = self->whiteToMove ? +1 : -1;
+
+    // Knight attack
+    unsigned long* directions = knightDirections[ index ];
+    for ( short loop = 0; loop < 8; loop++ )
+    {
+        if ( directions[ loop ] != 0 )
+        {
+            unsigned long long target = 1ull << ( index + directions[ loop ] );
+
+            if ( friendlyPieces->bbKnight & target )
+            {
+                return true;
+            }
+        }
+    }
+
+    // Use one method to check for Pawn, Bishop, Rook, Queen, King attack
+    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    {
+        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        {
+            if ( rankOffset == 0 && fileOffset == 0 )
+            {
+                continue;
+            }
+
+            for ( short distance = 1; distance < 8; distance++ )
+            {
+                const long targetRank = pieceRank + ( distance * rankOffset );
+                const long targetFile = pieceFile + ( distance * fileOffset );
+                const unsigned long targetIndex = ( targetRank << 3 ) + targetFile;
+                const unsigned long long targetBit = 1ull << targetIndex;
+
+                if ( targetRank < 0 || targetRank > 7 )
+                {
+                    break;
+                }
+
+                if ( targetFile < 0 || targetFile > 7 )
+                {
+                    break;
+                }
+
+                // If we hit an attacker piece, then the search in this direction is over
+
+                if ( Board_containsAttacker( self, targetIndex ) )
+                {
+                    break;
+                }
+
+                // If we hit an empty square, continue the search
+
+                if ( Board_isEmptySquare( self, targetIndex ) )
+                {
+                    continue;
+                }
+
+                // If we are right next to the original piece, then this might be our king
+
+                if ( distance == 1 )
+                {
+                    // Test king
+                    if ( friendlyPieces->king == targetIndex )
+                    {
+                        return true;
+                    }
+                }
+
+                // Check the direction of travel to see if we encounter a piece that could attack is in this direction
+
+                if ( rankOffset == 0 || fileOffset == 0 )
+                {
+                    // Test horizontal/vertical - rook or queen
+
+                    if ( targetBit & ( friendlyPieces->bbRook | friendlyPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Test bishop or queen
+
+                    if ( targetBit & ( friendlyPieces->bbBishop | friendlyPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+
+                    // With a bit more logic, we can also test pawn
+                    // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
+                    // an assessment of whether, if the move was made, the pawn could take us
+
+                    if ( rankOffset == -directionOfTravel && distance == 1 )
+                    {
+                        if ( targetBit & friendlyPieces->bbPawn )
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 void Board_addMove( Board* self, MoveList* moveList, Move move )
 {
-    if ( !Board_isAttacked( self, self->whiteToMove ? self->whitePieces.king : self->blackPieces.king ) )
-    {
-        MoveList_addMove( moveList, move );
-    }
+    MoveList_addMove( moveList, move );
 }
