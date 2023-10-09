@@ -1216,57 +1216,49 @@ bool Board_makeMove( Board* self, Move move )
         friendlyPieces->queensideCastling = false;
     }
 
-    // If we're moving a rook, 
+    // Do the management of castling rights by color, not by attack/friend pieces as we 
+    // end up mixing metaphores if we're not careful
+
+    // If we're moving a rook, see if it revokes our castling rights
+
     if ( Board_isRook( fromPiece ) )
     {
-        if ( self->whiteToMove )
+        if ( from == A1 )
         {
-            if ( from == A1 )
-            {
-                friendlyPieces->queensideCastling = false;
-            }
-            else if ( from == H1 )
-            {
-                friendlyPieces->kingsideCastling = false;
-            }
+            self->whitePieces.queensideCastling = false;
         }
-        else // black to move
+        else if ( from == H1 )
         {
-            if ( from == A8 )
-            {
-                friendlyPieces->queensideCastling = false;
-            }
-            else if ( from == H8 )
-            {
-                friendlyPieces->kingsideCastling = false;
-            }
+            self->whitePieces.kingsideCastling = false;
+        }
+        else if ( from == A8 )
+        {
+            self->blackPieces.queensideCastling = false;
+        }
+        else if ( from == H8 )
+        {
+            self->blackPieces.kingsideCastling = false;
         }
     }
 
     // If we are taking the opponent's rook, then it can no longer be used for castling
     if ( Board_isRook( toPiece ) )
     {
-        if ( self->whiteToMove )
+        if ( to == A8 )
         {
-            if ( to == A8 )
-            {
-                attackerPieces->queensideCastling = false;
-            }
-            else if ( to == H8 )
-            {
-                attackerPieces->kingsideCastling = false;
-            }
+            self->blackPieces.queensideCastling = false;
         }
-        else // black to move
+        else if ( to == H8 )
         {
-            if ( to == A1 )
-            {
-                attackerPieces->queensideCastling = false;
-            }
-            else if ( to == H1 )
-            {
-                attackerPieces->kingsideCastling = false;
-            }
+            self->blackPieces.kingsideCastling = false;
+        }
+        else if ( to == A1 )
+        {
+            self->whitePieces.queensideCastling = false;
+        }
+        else if ( to == H1 )
+        {
+            self->whitePieces.kingsideCastling = false;
         }
     }
 
