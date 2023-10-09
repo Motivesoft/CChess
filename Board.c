@@ -1134,6 +1134,8 @@ void Board_setSquare( Board* self, PieceList* pieceList, enum Piece piece, unsig
 bool Board_makeMove( Board* self, Move move )
 {
     // Return false if it becomes apparent that the move is not legal
+    char moveString[ 10 ];
+    Board_exportMove( move, moveString );
 
     PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
     PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
@@ -1214,29 +1216,57 @@ bool Board_makeMove( Board* self, Move move )
         friendlyPieces->queensideCastling = false;
     }
 
+    // If we're moving a rook, 
     if ( Board_isRook( fromPiece ) )
     {
-        if ( Board_fileFromIndex( from ) == 0 )
+        if ( self->whiteToMove )
         {
-            friendlyPieces->queensideCastling = false;
-
+            if ( from == A1 )
+            {
+                friendlyPieces->queensideCastling = false;
+            }
+            else if ( from == H1 )
+            {
+                friendlyPieces->kingsideCastling = false;
+            }
         }
-        else if ( Board_fileFromIndex( from ) == 7 )
+        else // black to move
         {
-            friendlyPieces->kingsideCastling = false;
+            if ( from == A8 )
+            {
+                friendlyPieces->queensideCastling = false;
+            }
+            else if ( from == H8 )
+            {
+                friendlyPieces->kingsideCastling = false;
+            }
         }
     }
 
+    // If we are taking the opponent's rook, then it can no longer be used for castling
     if ( Board_isRook( toPiece ) )
     {
-        if ( Board_fileFromIndex( to ) == 0 )
+        if ( self->whiteToMove )
         {
-            attackerPieces->queensideCastling = false;
-
+            if ( to == A8 )
+            {
+                attackerPieces->queensideCastling = false;
+            }
+            else if ( to == H8 )
+            {
+                attackerPieces->kingsideCastling = false;
+            }
         }
-        else if ( Board_fileFromIndex( to ) == 7 )
+        else // black to move
         {
-            attackerPieces->kingsideCastling = false;
+            if ( to == A1 )
+            {
+                attackerPieces->queensideCastling = false;
+            }
+            else if ( to == H1 )
+            {
+                attackerPieces->kingsideCastling = false;
+            }
         }
     }
 
