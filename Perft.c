@@ -90,6 +90,7 @@ void Perft_fen( struct RuntimeSetup* runtimeSetup, char* fenWithResults )
             separator = strchr( fenWithResults, ';' );
         }
 
+        // Drop out here as we're done and it simplifies the code below
         return;
     }
     
@@ -100,6 +101,24 @@ void Perft_fen( struct RuntimeSetup* runtimeSetup, char* fenWithResults )
         return;
     }
 
+    int depth = 1;
+    while ( separator != NULL && *separator != '\0' )
+    {
+        *separator++ = '\0';
+
+        unsigned long long expectedResult = atoll( separator );
+        if ( Perft_depth( runtimeSetup, depth, fenWithResults, false ) != expectedResult )
+        {
+            LOG_ERROR( "Failed: expected result was %llu", expectedResult );
+        }
+        else
+        {
+            LOG_INFO( "Success" );
+        }
+
+        depth++;
+        separator = strchr( separator, ',' );
+    }
 
     // Board* = Board_create( fen );
     // for each expected result
