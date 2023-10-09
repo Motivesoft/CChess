@@ -20,7 +20,7 @@
 #define LOG_WARN( ... ) { RuntimeSetup_log( runtimeSetup, WARN, __VA_ARGS__ ); }
 #define LOG_ERROR( ... ) { RuntimeSetup_log( runtimeSetup, ERROR, __VA_ARGS__ ); }
 
-void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen )
+unsigned long long Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen, bool divide )
 {
     LOG_DEBUG( "perft with depth %d and FEN: %s", depth, fen );
 
@@ -29,21 +29,78 @@ void Perft_depth( struct RuntimeSetup* runtimeSetup, int depth, const char* fen 
     
     clock_t start = clock();
 
-    unsigned long long count = Perft_run( &board, depth, runtimeSetup->debug );
+    unsigned long long count = Perft_run( runtimeSetup, &board, depth, divide );
 
     clock_t end = clock();
 
     float totalTime = (float) ( end - start ) / CLOCKS_PER_SEC;
     float nps = count / totalTime;
-    fprintf( runtimeSetup->logger, "Move count: %llu in %0.3fs (%0.0f nps)\n", count, totalTime, nps );
+
+    LOG_INFO( "Move count: %llu in %0.3fs (%0.0f nps)", count, totalTime, nps );
+
+    return count;
 }
 
-void Perft_fen( struct RuntimeSetup* runtimeSetup, const char* fenWithResults )
+void Perft_fen( struct RuntimeSetup* runtimeSetup, char* fenWithResults )
 {
     LOG_DEBUG( "perft with FEN: %s", fenWithResults );
 
+    if ( strlen( fenWithResults ) == 0 )
+    {
+        LOG_ERROR( "Missing FEN string" );
+        return;
+    }
+
     // TODO
     // Split expected results from fen
+    char* separator = strchr( fenWithResults, ';' );
+    if ( separator != NULL )
+    {
+        // Split the string into FEN and results
+        *separator++ = '\0';
+
+        while ( separator != NULL && *separator != '\0' )
+        {
+            if ( *separator++ != 'D' )
+            {
+                LOG_ERROR( "Malformed expected result with: %s", fenWithResults );
+                return;
+            }
+
+            int depth = atoi( separator );
+
+            separator = strchr( separator, ' ' );
+            if ( separator == NULL )
+            {
+                LOG_ERROR( "Malformed expected result with: %s", fenWithResults );
+                return;
+            }
+
+            unsigned long long expectedResult = atoll( ++separator );
+
+            if ( Perft_depth( runtimeSetup, depth, fenWithResults, false ) != expectedResult )
+            {
+                LOG_ERROR( "Failed: expected result was %llu", expectedResult );
+            }
+            else
+            {
+                LOG_INFO( "Success" );
+            }
+
+            separator = strchr( fenWithResults, ';' );
+        }
+
+        return;
+    }
+    
+    separator = strchr( fenWithResults, ',' );
+    if ( separator == NULL )
+    {
+        LOG_ERROR( "FEN string missing expected results: %s", fenWithResults );
+        return;
+    }
+
+
     // Board* = Board_create( fen );
     // for each expected result
     //   unsigned long count = Perft_loop( board, depth, true );
@@ -82,12 +139,12 @@ void Perft_file( struct RuntimeSetup* runtimeSetup, const char* filename )
     }
 }
 
-unsigned long long Perft_run( Board* board, int depth, bool divide )
+unsigned long long Perft_run( struct RuntimeSetup* runtimeSetup, Board* board, int depth, bool divide )
 {
-    return divide ? Perft_divide( board, depth ) : Perft_loop( board, depth );
+    return divide ? Perft_divide( runtimeSetup, board, depth ) : Perft_loop( runtimeSetup, board, depth );
 }
 
-unsigned long long Perft_loop( Board* board, int depth )
+unsigned long long Perft_loop( struct RuntimeSetup* runtimeSetup, Board* board, int depth )
 {
     if ( depth == 0 )
     {
@@ -113,7 +170,7 @@ unsigned long long Perft_loop( Board* board, int depth )
     {
         if ( Board_makeMove( board, moveList.moves[ loop ] ) )
         {
-            nodes += Perft_loop( board, depth - 1 );
+            nodes += Perft_loop( runtimeSetup, board, depth - 1 );
         }
 
         Board_apply( board, &copy );
@@ -122,7 +179,7 @@ unsigned long long Perft_loop( Board* board, int depth )
     return nodes;
 }
 
-unsigned long long Perft_divide( Board* board, int depth )
+unsigned long long Perft_divide( struct RuntimeSetup* runtimeSetup, Board* board, int depth )
 {
     if ( depth == 0 )
     {
@@ -146,13 +203,13 @@ unsigned long long Perft_divide( Board* board, int depth )
     {
         if ( Board_makeMove( board, moveList.moves[ loop ] ) )
         {
-            divideNodes = Perft_loop( board, depth - 1 );
+            divideNodes = Perft_loop( runtimeSetup, board, depth - 1 );
             nodes += divideNodes;
 
             Board_exportMove( moveList.moves[ loop ], moveString );
             Board_exportBoard( board, fenString );
 
-            printf( "  %s : %llu - %s\n", moveString, divideNodes, fenString );
+            LOG_INFO( "  %s : %llu - %s", moveString, divideNodes, fenString );
         }
 
         Board_apply( board, &copy );

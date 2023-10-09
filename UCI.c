@@ -220,7 +220,7 @@ bool UCI_perft( struct UCIConfiguration* self, struct RuntimeSetup* runtimeSetup
     else // Assume depth and optional fen
     {
         int depth = atoi( keyword );
-        Perft_depth( runtimeSetup, depth, strlen( remainder ) > 0 ? remainder : STARTPOS );
+        Perft_depth( runtimeSetup, depth, strlen( remainder ) > 0 ? remainder : STARTPOS, runtimeSetup->debug );
     }
 
     return true;

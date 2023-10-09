@@ -64,10 +64,10 @@ void Board_create( Board* board, const char* fen )
 
     free( fenCopy );
 
-    Board_printBoard( board );
-    char x[ 256 ];
-    Board_exportBoard( board, x );
-    printf( "%s\n", x );
+    //Board_printBoard( board );
+    //char x[ 256 ];
+    //Board_exportBoard( board, x );
+    //printf( "%s\n", x );
 }
 
 static void Board_initialize()
