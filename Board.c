@@ -1387,6 +1387,10 @@ bool Board_isAttacked( Board* self, unsigned long index )
                         }
                     }
                 }
+
+                // If we get here, there is an enemy piece detected, just not one that can attack us from here.
+                // Regardless, it stops the search in this direction
+                break;
             }
         }
     }
@@ -1503,6 +1507,9 @@ bool Board_isAttacking( Board* self, unsigned long index )
                         }
                     }
                 }
+
+                // Got here because we found a friendly piece that is not an attacker in this direction
+                break;
             }
         }
     }
