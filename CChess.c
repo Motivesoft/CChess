@@ -95,6 +95,10 @@ int main( int argc, char** argv )
         {
             RuntimeSetup_setDebug( runtimeSetup, true );
         }
+        else if ( strcmp( argv[ loop ], "-colorize" ) == 0 )
+        {
+            RuntimeSetup_setColorize( runtimeSetup, true );
+        }
         else
         {
             LOG_ERROR( "Unrecognised argument: %s", argv[ loop ] );

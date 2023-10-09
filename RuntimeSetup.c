@@ -27,6 +27,7 @@ struct RuntimeSetup* RuntimeSetup_createRuntimeSetup()
         RuntimeSetup_resetLogger( runtimeSetup );
 
         runtimeSetup->debug = false;
+        runtimeSetup->colorize = false;
     }
 
     return runtimeSetup;
@@ -122,6 +123,12 @@ void RuntimeSetup_setDebug( struct RuntimeSetup* self, bool debug )
     self->debug = debug;
 }
 
+void RuntimeSetup_setColorize( struct RuntimeSetup* self, bool colorize )
+{
+    LOG_DEBUG( "Set colorize %s", ( colorize ? "on" : "off" ) );
+    self->colorize = colorize;
+}
+
 char* RuntimeSetup_getline( struct RuntimeSetup* self, char* buffer, int bufferSize )
 {
     memset( buffer, 0, bufferSize );
@@ -142,7 +149,7 @@ void RuntimeSetup_log( struct RuntimeSetup* self, enum LogLevel level, const cha
     va_list args;
     va_start( args, format );
 
-    if ( self->logger == stderr )
+    if ( self->logger == stderr && self->colorize )
     {
         fprintf( self->logger, "%s%s: ", color[ level ], label[ level ] );
 

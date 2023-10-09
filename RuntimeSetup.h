@@ -7,6 +7,7 @@ struct RuntimeSetup
     FILE* logger;
 
     bool debug;
+    bool colorize;
 };
 
 // Control methods
@@ -31,6 +32,7 @@ errno_t RuntimeSetup_setOutput( struct RuntimeSetup* self, const char* filename 
 errno_t RuntimeSetup_setLogger( struct RuntimeSetup* self, const char* filename );
 
 void RuntimeSetup_setDebug( struct RuntimeSetup* self, bool debug );
+void RuntimeSetup_setColorize( struct RuntimeSetup* self, bool colorize );
 
 // Helper methods
 

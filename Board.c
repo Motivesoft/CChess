@@ -23,66 +23,51 @@ static const char COLOR_MASK = BLACK_PAWN - WHITE_PAWN - 1;
 static unsigned long knightDirections[ 64 ][ 8 ];
 static unsigned long kingDirections[ 64 ][ 8 ];
 
-struct Board* Board_create( const char* fen )
+void Board_create( Board* board, const char* fen )
 {
-    struct Board* board = malloc( sizeof( struct Board ) );
+    Board_initialize( board );
+    Board_clearBoard( board );
 
-    if ( board != NULL )
+    // FEN string is multiple space-separated sections as:
+    // - piece layout
+    // - active color
+    // - castling rights
+    // - en passant square
+    // - halfmove clock (will sometimes be absent - e.g. in epd strings)
+    // - fullmove number (will sometimes be absent - e.g. in epd strings)
+    //
+    // As UCI is a programmatic API, it is safe to assume the FEN string is valid
+
+    // Set these to defaults in case they are not specified in the string
+    FenProcessor fenProcessors[] =
     {
-        Board_initialize( board );
-        Board_clearBoard( board );
+        Board_processBoardLayout,
+        Board_processActiveColor,
+        Board_processCastlingRights,
+        Board_processEnPassantSquare,
+        Board_processHalfmoveClock,
+        Board_processFullmoveNumber,
+    };
+    unsigned short processor = 0;
 
-        // FEN string is multiple space-separated sections as:
-        // - piece layout
-        // - active color
-        // - castling rights
-        // - en passant square
-        // - halfmove clock (will sometimes be absent - e.g. in epd strings)
-        // - fullmove number (will sometimes be absent - e.g. in epd strings)
-        //
-        // As UCI is a programmatic API, it is safe to assume the FEN string is valid
-
-        // Set these to defaults in case they are not specified in the string
-        FenProcessor fenProcessors[] =
-        {
-            Board_processBoardLayout,
-            Board_processActiveColor,
-            Board_processCastlingRights,
-            Board_processEnPassantSquare,
-            Board_processHalfmoveClock,
-            Board_processFullmoveNumber,
-        };
-        unsigned short processor = 0;
-
-        char* fenCopy = _strdup( fen );
-        char* section;
-        char* nextToken = NULL;
-        section = strtok_s( fenCopy, " ", &nextToken );
+    char* fenCopy = _strdup( fen );
+    char* section;
+    char* nextToken = NULL;
+    section = strtok_s( fenCopy, " ", &nextToken );
         
-        while ( section != NULL )
-        {
-            fenProcessors[ processor++ ]( board, section );
-
-            section = strtok_s( NULL, " ", &nextToken );
-        }
-
-        free( fenCopy );
-    }
-
-    Board_printBoard( board );
-    char x[ 256 ];
-    Board_exportBoard( board, x );
-    printf( "%s\n", x );
-
-    return board;
-}
-
-void Board_destroy( struct Board* self )
-{
-    if ( self != NULL )
+    while ( section != NULL )
     {
-        free( self );
+        fenProcessors[ processor++ ]( board, section );
+
+        section = strtok_s( NULL, " ", &nextToken );
     }
+
+    free( fenCopy );
+
+    //Board_printBoard( board );
+    //char x[ 256 ];
+    //Board_exportBoard( board, x );
+    //printf( "%s\n", x );
 }
 
 static void Board_initialize()
@@ -168,7 +153,7 @@ static void Board_initialize()
     }
 }
 
-void Board_clearBoard( struct Board* self )
+void Board_clearBoard( Board* self )
 {
     self->whitePieces.bbPawn = 0;
     self->whitePieces.bbKnight = 0;
@@ -206,7 +191,7 @@ void Board_clearBoard( struct Board* self )
     }
 }
 
-void Board_processBoardLayout( struct Board* self, const char* fenSection ) 
+void Board_processBoardLayout( Board* self, const char* fenSection ) 
 {
     int rank = 7;
     int file = 0;
@@ -312,12 +297,12 @@ void Board_processBoardLayout( struct Board* self, const char* fenSection )
     free( section );
 }
 
-void Board_processActiveColor( struct Board* self, const char* fenSection ) 
+void Board_processActiveColor( Board* self, const char* fenSection ) 
 {
     self->whiteToMove = ( fenSection[ 0 ] == 'w' );
 }
 
-void Board_processCastlingRights( struct Board* self, const char* fenSection ) 
+void Board_processCastlingRights( Board* self, const char* fenSection ) 
 {
     if ( fenSection[ 0 ] != '-' )
     {
@@ -347,7 +332,7 @@ void Board_processCastlingRights( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_processEnPassantSquare( struct Board* self, const char* fenSection ) 
+void Board_processEnPassantSquare( Board* self, const char* fenSection ) 
 {
     if ( fenSection[ 0 ] != '-' )
     {
@@ -355,7 +340,7 @@ void Board_processEnPassantSquare( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_processHalfmoveClock( struct Board* self, const char* fenSection ) 
+void Board_processHalfmoveClock( Board* self, const char* fenSection ) 
 {
     if ( fenSection != NULL )
     {
@@ -363,7 +348,7 @@ void Board_processHalfmoveClock( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_processFullmoveNumber( struct Board* self, const char* fenSection ) 
+void Board_processFullmoveNumber( Board* self, const char* fenSection ) 
 {
     if ( fenSection != NULL )
     {
@@ -371,7 +356,7 @@ void Board_processFullmoveNumber( struct Board* self, const char* fenSection )
     }
 }
 
-void Board_printBoard( struct Board* self )
+void Board_printBoard( Board* self )
 {
     printf( "     A   B   C   D   E   F   G   H \n" );
     printf( "   +---+---+---+---+---+---+---+---+\n" );
@@ -404,7 +389,7 @@ void Board_printBoard( struct Board* self )
     printf( "     A   B   C   D   E   F   G   H \n" );
 }
 
-void Board_exportBoard( struct Board* self, char* fen )
+void Board_exportBoard( Board* self, char* fen )
 {
     int fenIndex = 0;
     for ( unsigned char rank = 8; rank > 0; rank-- )
@@ -498,7 +483,7 @@ void Board_exportBoard( struct Board* self, char* fen )
     strcat_s( fen, strlen( fen ) + BUFFERSIZE, buffer );
 }
 
-void Board_exportMove( struct Move* move, char* moveString )
+void Board_exportMove( Move move, char* moveString )
 {
     unsigned char index = 0;
     moveString[ index++ ] = (char)('a' + Move_fromFile( move ) );
@@ -512,23 +497,42 @@ void Board_exportMove( struct Move* move, char* moveString )
     moveString[ index ] = '\0';
 }
 
-struct MoveList* Board_generateMoves( struct Board* self )
+MoveList* Board_generateMoves( Board* self, MoveList* moveList )
 {
-    struct MoveList* moveList = MoveList_createMoveList();
+    // Generate pseudolegal moves and then copy the legal ones into the provided list
+    MoveList pseudoLegalMoves;
+    pseudoLegalMoves.count = 0;
 
-    Board_generatePawnMoves( self, moveList );
-    Board_generateKnightMoves( self, moveList );
-    Board_generateKingMoves( self, moveList );
+    Board_generatePawnMoves( self, &pseudoLegalMoves );
+    Board_generateKnightMoves( self, &pseudoLegalMoves );
+    Board_generateBishopMoves( self, &pseudoLegalMoves );
+    Board_generateRookMoves( self, &pseudoLegalMoves );
+    Board_generateQueenMoves( self, &pseudoLegalMoves );
+    Board_generateKingMoves( self, &pseudoLegalMoves );
+
+    Board copy;
+    Board_copy( self, &copy );
+    for ( short loop = 0; loop < pseudoLegalMoves.count; loop++ )
+    {
+        Board_makeMove( self, pseudoLegalMoves.moves[ loop ] );
+
+        if ( !Board_isAttacking( self, self->whiteToMove ? self->blackPieces.king : self->whitePieces.king ) )
+        {
+            MoveList_addMove( moveList, pseudoLegalMoves.moves[ loop ] );
+        }
+
+        Board_apply( self, &copy );
+    }
 
     return moveList;
 }
 
-void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
+void Board_generatePawnMoves( Board* self, MoveList* moveList )
 {
     static const unsigned long whitePromotionPieces[] = { WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN };
     static const unsigned long blackPromotionPieces[] = { BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN };
 
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
     const unsigned long oneStep = self->whiteToMove ? +8 : -8;
     const unsigned long twoStep = self->whiteToMove ? +16 : -16;
@@ -557,19 +561,19 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             {
                 for ( unsigned short loop = 0; loop < 4; loop++ )
                 {
-                    MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop] ) );
+                    Board_addMove( self, moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop] ) );
                 }
             }
             else
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
 
                 // Those elible for a single step forward can maybe also do two steps
      
                 destination = index + twoStep;
                 if ( Board_rankFromIndex( index ) == homeRank && self->squares[ destination ] == EMPTY )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -579,7 +583,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             destination = index + captureL;
             if ( destination == self->enPassantSquare )
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
             else if ( Board_containsAttacker( self, destination ) )
             {
@@ -587,12 +591,12 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
                 {
                     for ( unsigned short loop = 0; loop < 4; loop++ )
                     {
-                        MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
+                        Board_addMove( self, moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
                     }
                 }
                 else
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
@@ -602,7 +606,7 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
             destination = index + captureR;
             if ( destination == self->enPassantSquare )
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
             else if ( Board_containsAttacker( self, destination ) )
             {
@@ -610,21 +614,21 @@ void Board_generatePawnMoves( struct Board* self, struct MoveList* moveList )
                 {
                     for ( unsigned short loop = 0; loop < 4; loop++ )
                     {
-                        MoveList_addMove( moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
+                        Board_addMove( self, moveList, Move_createPromotionMove( index, destination, promotionPieces[ loop ] ) );
                     }
                 }
                 else
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
     }
 }
 
-void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
+void Board_generateKnightMoves( Board* self, MoveList* moveList )
 {
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
 
     unsigned long long pieces = friendlyPieces->bbKnight;
 
@@ -642,17 +646,216 @@ void Board_generateKnightMoves( struct Board* self, struct MoveList* moveList )
                 destination = index + directions[ loop ];
                 if ( !Board_containsFriendly( self, destination ) )
                 {
-                    MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
                 }
             }
         }
     }
 }
 
-void Board_generateKingMoves( struct Board* self, struct MoveList* moveList )
+void Board_generateBishopMoves( Board* self, MoveList* moveList ) 
 {
-    const struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
-    const struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long long pieces = friendlyPieces->bbBishop;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        long pieceRank = Board_rankFromIndex( index );
+        long pieceFile = Board_fileFromIndex( index );
+
+        // Normal one-square moves diagonal
+        short vectors[][2] =
+        { 
+            {-1,-1},
+            {-1,+1},
+            {+1,-1},
+            {+1,+1},
+        };
+
+        for ( unsigned short vectorIndex = 0; vectorIndex < 4; vectorIndex++ )
+        {
+            for ( unsigned short distance = 1; distance < 8; distance++ )
+            {
+                long destinationRank = pieceRank + ( distance * vectors[ vectorIndex ][ 0 ] );
+                if ( destinationRank < 0 || destinationRank > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+                long destinationFile = pieceFile + ( distance * vectors[ vectorIndex ][ 1 ] );
+                if ( destinationFile < 0 || destinationFile > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+
+                destination = ( destinationRank << 3 ) + destinationFile;
+
+                if ( Board_containsFriendly( self, destination ) )
+                {
+                    // Stop travelling in this direction - friendly piece found
+                    break;
+                }
+                else if ( Board_containsAttacker( self, destination ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
+
+                    // Stop travelling in this direction - capture made
+                    break;
+                }
+                else // Empty square - note the move and keep looking
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateRookMoves( Board* self, MoveList* moveList ) 
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long long pieces = friendlyPieces->bbRook;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        long pieceRank = Board_rankFromIndex( index );
+        long pieceFile = Board_fileFromIndex( index );
+
+        // Normal one-square moves horizontal and vertical
+        short vectors[][ 2 ] =
+        {
+            {-1, 0},
+            { 0,-1},
+            { 0,+1},
+            {+1, 0},
+        };
+
+        for ( unsigned short vectorIndex = 0; vectorIndex < 4; vectorIndex++ )
+        {
+            for ( unsigned short distance = 1; distance < 8; distance++ )
+            {
+                long destinationRank = pieceRank + ( distance * vectors[ vectorIndex ][ 0 ] );
+                if ( destinationRank < 0 || destinationRank > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+                long destinationFile = pieceFile + ( distance * vectors[ vectorIndex ][ 1 ] );
+                if ( destinationFile < 0 || destinationFile > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+
+                destination = ( destinationRank << 3 ) + destinationFile;
+
+                if ( Board_containsFriendly( self, destination ) )
+                {
+                    // Stop travelling in this direction - friendly piece found
+                    break;
+                }
+                else if ( Board_containsAttacker( self, destination ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
+
+                    // Stop travelling in this direction - capture made
+                    break;
+                }
+                else // Empty square - note the move and keep looking
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateQueenMoves( Board* self, MoveList* moveList ) 
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    unsigned long long pieces = friendlyPieces->bbQueen;
+
+    unsigned long index;
+    unsigned long destination;
+    while ( _BitScanForward64( &index, pieces ) )
+    {
+        pieces ^= 1ull << index;
+
+        long pieceRank = Board_rankFromIndex( index );
+        long pieceFile = Board_fileFromIndex( index );
+
+        // Normal one-square moves in any direction
+        short vectors[][ 2 ] =
+        {
+            {-1,-1},
+            {-1,+1},
+            {+1,-1},
+            {+1,+1},
+            {-1, 0},
+            { 0,-1},
+            { 0,+1},
+            {+1, 0},
+        };
+
+        for ( unsigned short vectorIndex = 0; vectorIndex < 8; vectorIndex++ )
+        {
+            for ( unsigned short distance = 1; distance < 8; distance++ )
+            {
+                long destinationRank = pieceRank + ( distance * vectors[ vectorIndex ][ 0 ] );
+                if ( destinationRank < 0 || destinationRank > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+                long destinationFile = pieceFile + ( distance * vectors[ vectorIndex ][ 1 ] );
+                if ( destinationFile < 0 || destinationFile > 7 )
+                {
+                    // Stop travelling in this direction
+                    break;
+                }
+
+                destination = ( destinationRank << 3 ) + destinationFile;
+
+                if ( Board_containsFriendly( self, destination ) )
+                {
+                    // Stop travelling in this direction - friendly piece found
+                    break;
+                }
+                else if ( Board_containsAttacker( self, destination ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
+
+                    // Stop travelling in this direction - capture made
+                    break;
+                }
+                else // Empty square - note the move and keep looking
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, destination ) );
+                }
+            }
+        }
+    }
+}
+
+void Board_generateKingMoves( Board* self, MoveList* moveList )
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
     unsigned long index = friendlyPieces->king;
     unsigned long destination;
@@ -679,9 +882,8 @@ void Board_generateKingMoves( struct Board* self, struct MoveList* moveList )
 
             if ( !Board_containsFriendly( self, destination ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, destination ) );
+                Board_addMove( self, moveList, Move_createMove( index, destination ) );
             }
-
         }
     }
 
@@ -696,14 +898,21 @@ void Board_generateKingMoves( struct Board* self, struct MoveList* moveList )
         {
             if ( Board_isEmptySquare( self, F1 ) && Board_isEmptySquare( self, G1 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, G1 ) );
+                // We can't castle out of, or through check, so test this
+                if ( !Board_isAttacked( self, E1 ) && !Board_isAttacked( self, F1 ) && !Board_isAttacked( self, G1 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, G1 ) );
+                }
             }
         }
         else
         {
             if ( Board_isEmptySquare( self, F8 ) && Board_isEmptySquare( self, G8 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, G8 ) );
+                if ( !Board_isAttacked( self, E8 ) && !Board_isAttacked( self, F8 ) && !Board_isAttacked( self, G8 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, G8 ) );
+                }
             }
         }
     }
@@ -714,14 +923,20 @@ void Board_generateKingMoves( struct Board* self, struct MoveList* moveList )
         {
             if ( Board_isEmptySquare( self, B1 ) && Board_isEmptySquare( self, C1 ) && Board_isEmptySquare( self, D1 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, C1 ) );
+                if ( !Board_isAttacked( self, E1 ) && !Board_isAttacked( self, D1 ) && !Board_isAttacked( self, C1 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, C1 ) );
+                }
             }
         }
         else
         {
             if ( Board_isEmptySquare( self, B8 ) && Board_isEmptySquare( self, C8 ) && Board_isEmptySquare( self, D8 ) )
             {
-                MoveList_addMove( moveList, Move_createMove( index, C8 ) );
+                if ( !Board_isAttacked( self, E8 ) && !Board_isAttacked( self, D8 ) && !Board_isAttacked( self, C8 ) )
+                {
+                    Board_addMove( self, moveList, Move_createMove( index, C8 ) );
+                }
             }
         }
     }
@@ -737,12 +952,12 @@ unsigned long Board_fileFromIndex( unsigned long index )
     return index & 0b00000111;
 }
 
-bool Board_isEmptySquare( struct Board* self, unsigned long index )
+bool Board_isEmptySquare( Board* self, unsigned long index )
 {
     return self->squares[ index ] == EMPTY;
 }
 
-bool Board_containsFriendly( struct Board* self, unsigned long index )
+bool Board_containsFriendly( Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
     if ( Board_isEmptySquare( self, index ) )
@@ -760,7 +975,7 @@ bool Board_containsFriendly( struct Board* self, unsigned long index )
     }
 }
 
-bool Board_containsAttacker( struct Board* self, unsigned long index )
+bool Board_containsAttacker( Board* self, unsigned long index )
 {
     // Empty can look like a white piece if we don't explicitly check
     if ( Board_isEmptySquare( self, index ) )
@@ -818,7 +1033,7 @@ bool Board_isBlackPiece( enum Piece piece )
     return piece >= BLACK_PAWN && piece <= BLACK_KING;
 }
 
-void Board_clearSquare( struct Board* self, struct PieceList* pieceList, unsigned long index )
+void Board_clearSquare( Board* self, PieceList* pieceList, unsigned long index )
 {
     if ( Board_isEmptySquare( self, index ) )
     {
@@ -840,29 +1055,31 @@ void Board_clearSquare( struct Board* self, struct PieceList* pieceList, unsigne
     else
     {
         const unsigned long long mask = 1ull << index;
+        const unsigned long long notmask = ~mask;
 
         self->squares[ index ] = EMPTY;
 
         // Special case
-        if ( pieceList->bbKing && mask )
+        if ( pieceList->bbKing & mask )
         {
-            pieceList->bbKing ^= mask;
+            pieceList->bbKing &= notmask;
             pieceList->king = OFF_BOARD;
         }
         else
         {
-            pieceList->bbPawn ^= mask;
-            pieceList->bbKnight ^= mask;
-            pieceList->bbBishop ^= mask;
-            pieceList->bbRook ^= mask;
-            pieceList->bbQueen ^= mask;
+
+            pieceList->bbPawn &= notmask;
+            pieceList->bbKnight &= notmask;
+            pieceList->bbBishop &= notmask;
+            pieceList->bbRook &= notmask;
+            pieceList->bbQueen &= notmask;
         }
 
-        pieceList->bbAll ^= mask;
+        pieceList->bbAll &= notmask;
     }
 }
 
-void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piece piece, unsigned long index )
+void Board_setSquare( Board* self, PieceList* pieceList, enum Piece piece, unsigned long index )
 {
     // Precaution, hopefully not too costly
     if ( !Board_isEmptySquare( self, index ) )
@@ -914,12 +1131,14 @@ void Board_setSquare( struct Board* self, struct PieceList* pieceList, enum Piec
     }
 }
 
-bool Board_makeMove( struct Board* self, struct Move* move )
+bool Board_makeMove( Board* self, Move move )
 {
     // Return false if it becomes apparent that the move is not legal
+    char moveString[ 10 ];
+    Board_exportMove( move, moveString );
 
-    struct PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
-    struct PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+    PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
     unsigned long from = Move_from( move );
     unsigned long to = Move_to( move );
@@ -997,29 +1216,49 @@ bool Board_makeMove( struct Board* self, struct Move* move )
         friendlyPieces->queensideCastling = false;
     }
 
+    // Do the management of castling rights by color, not by attack/friend pieces as we 
+    // end up mixing metaphores if we're not careful
+
+    // If we're moving a rook, see if it revokes our castling rights
+
     if ( Board_isRook( fromPiece ) )
     {
-        if ( Board_fileFromIndex( from ) == 0 )
+        if ( from == A1 )
         {
-            friendlyPieces->queensideCastling = false;
-
+            self->whitePieces.queensideCastling = false;
         }
-        else if ( Board_fileFromIndex( from ) == 7 )
+        else if ( from == H1 )
         {
-            friendlyPieces->kingsideCastling = false;
+            self->whitePieces.kingsideCastling = false;
+        }
+        else if ( from == A8 )
+        {
+            self->blackPieces.queensideCastling = false;
+        }
+        else if ( from == H8 )
+        {
+            self->blackPieces.kingsideCastling = false;
         }
     }
 
+    // If we are taking the opponent's rook, then it can no longer be used for castling
     if ( Board_isRook( toPiece ) )
     {
-        if ( Board_fileFromIndex( to ) == 0 )
+        if ( to == A8 )
         {
-            attackerPieces->queensideCastling = false;
-
+            self->blackPieces.queensideCastling = false;
         }
-        else if ( Board_fileFromIndex( to ) == 7 )
+        else if ( to == H8 )
         {
-            attackerPieces->kingsideCastling = false;
+            self->blackPieces.kingsideCastling = false;
+        }
+        else if ( to == A1 )
+        {
+            self->whitePieces.queensideCastling = false;
+        }
+        else if ( to == H1 )
+        {
+            self->whitePieces.kingsideCastling = false;
         }
     }
 
@@ -1046,25 +1285,261 @@ bool Board_makeMove( struct Board* self, struct Move* move )
     return true;
 }
 
-struct Board* Board_copy( struct Board* self ) 
+void Board_copy( Board* self, Board* copy ) 
 {
-    struct Board* other = malloc( sizeof( struct Board ) );
+    memcpy( copy, self, sizeof( Board ) );
+}
 
-    if ( other != NULL )
+void Board_apply( Board* self, Board* other ) 
+{
+    memcpy( self, other, sizeof( Board ) );
+}
+
+bool Board_compare( Board* self, Board* other ) 
+{
+    return memcmp( self, other, sizeof( Board ) ) == 0;
+}
+
+bool Board_isAttacked( Board* self, unsigned long index )
+{
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    const long pieceRank = Board_rankFromIndex( index );
+    const long pieceFile = Board_fileFromIndex( index );
+
+    const short directionOfTravel = self->whiteToMove ? +1 : -1;
+
+    // Knight attack
+    unsigned long* directions = knightDirections[ index ];
+    for ( short loop = 0; loop < 8; loop++ )
     {
-        memcpy( other, self, sizeof( struct Board ) );
+        if ( directions[ loop ] != 0 )
+        {
+            unsigned long long target = 1ull << ( index + directions[ loop ] );
+
+            if ( attackerPieces->bbKnight & target )
+            {
+                return true;
+            }
+        }
+    }
+    
+    // Use one method to check for Pawn, Bishop, Rook, Queen, King attack
+    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    {
+        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        {
+            if ( rankOffset == 0 && fileOffset == 0 )
+            {
+                continue;
+            }
+
+            for ( short distance = 1; distance < 8; distance++ )
+            {
+                const long targetRank = pieceRank + (distance * rankOffset);
+                const long targetFile = pieceFile + (distance * fileOffset);
+                const unsigned long targetIndex = ( targetRank << 3 ) + targetFile;
+                const unsigned long long targetBit = 1ull << targetIndex;
+
+                if ( targetRank < 0 || targetRank > 7 )
+                {
+                    break;
+                }
+
+                if ( targetFile < 0 || targetFile > 7 )
+                {
+                    break;
+                }
+
+                // If we hit a friendly piece, then the search in this direction is over
+
+                if ( Board_containsFriendly( self, targetIndex ) )
+                {
+                    break;
+                }
+
+                // If we hit an empty square, continue the search
+
+                if ( Board_isEmptySquare( self, targetIndex ) )
+                {
+                    continue;
+                }
+
+                // If we are right next to the original piece, then check if we're next to the opponent king
+
+                if ( distance == 1 )
+                {
+                    // Test king
+                    if ( attackerPieces->king == targetIndex )
+                    {
+                        return true;
+                    }
+                }
+
+                // Check the direction of travel to see if we encounter a piece that could attack is in this direction
+
+                if ( rankOffset == 0 || fileOffset == 0 )
+                {
+                    // Test horizontal/vertical - rook or queen
+                    
+                    if ( targetBit & ( attackerPieces->bbRook | attackerPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Test bishop or queen
+
+                    if ( targetBit & ( attackerPieces->bbBishop | attackerPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+
+                    // With a bit more logic, we can also test pawn
+                    // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
+                    // an assessment of whether, if the move was made, the pawn could take us
+
+                    if ( rankOffset == directionOfTravel && distance == 1 )
+                    {
+                        if ( targetBit & attackerPieces->bbPawn )
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                // If we get here, there is an enemy piece detected, just not one that can attack us from here.
+                // Regardless, it stops the search in this direction
+                break;
+            }
+        }
     }
 
-    return other;
+    return false;
 }
 
-void Board_apply( struct Board* self, struct Board* other ) 
+bool Board_isAttacking( Board* self, unsigned long index )
 {
-    memcpy( self, other, sizeof( struct Board ) );
+    const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
+    const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
+
+    const long pieceRank = Board_rankFromIndex( index );
+    const long pieceFile = Board_fileFromIndex( index );
+
+    const short directionOfTravel = self->whiteToMove ? +1 : -1;
+
+    // Knight attack
+    unsigned long* directions = knightDirections[ index ];
+    for ( short loop = 0; loop < 8; loop++ )
+    {
+        if ( directions[ loop ] != 0 )
+        {
+            unsigned long long target = 1ull << ( index + directions[ loop ] );
+
+            if ( friendlyPieces->bbKnight & target )
+            {
+                return true;
+            }
+        }
+    }
+
+    // Use one method to check for Pawn, Bishop, Rook, Queen, King attack
+    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    {
+        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        {
+            if ( rankOffset == 0 && fileOffset == 0 )
+            {
+                continue;
+            }
+
+            for ( short distance = 1; distance < 8; distance++ )
+            {
+                const long targetRank = pieceRank + ( distance * rankOffset );
+                const long targetFile = pieceFile + ( distance * fileOffset );
+                const unsigned long targetIndex = ( targetRank << 3 ) + targetFile;
+                const unsigned long long targetBit = 1ull << targetIndex;
+
+                if ( targetRank < 0 || targetRank > 7 )
+                {
+                    break;
+                }
+
+                if ( targetFile < 0 || targetFile > 7 )
+                {
+                    break;
+                }
+
+                // If we hit an attacker piece, then the search in this direction is over
+
+                if ( Board_containsAttacker( self, targetIndex ) )
+                {
+                    break;
+                }
+
+                // If we hit an empty square, continue the search
+
+                if ( Board_isEmptySquare( self, targetIndex ) )
+                {
+                    continue;
+                }
+
+                // If we are right next to the original piece, then this might be our king
+
+                if ( distance == 1 )
+                {
+                    // Test king
+                    if ( friendlyPieces->king == targetIndex )
+                    {
+                        return true;
+                    }
+                }
+
+                // Check the direction of travel to see if we encounter a piece that could attack is in this direction
+
+                if ( rankOffset == 0 || fileOffset == 0 )
+                {
+                    // Test horizontal/vertical - rook or queen
+
+                    if ( targetBit & ( friendlyPieces->bbRook | friendlyPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Test bishop or queen
+
+                    if ( targetBit & ( friendlyPieces->bbBishop | friendlyPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+
+                    // With a bit more logic, we can also test pawn
+                    // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
+                    // an assessment of whether, if the move was made, the pawn could take us
+
+                    if ( rankOffset == -directionOfTravel && distance == 1 )
+                    {
+                        if ( targetBit & friendlyPieces->bbPawn )
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                // Got here because we found a friendly piece that is not an attacker in this direction
+                break;
+            }
+        }
+    }
+
+    return false;
 }
 
-bool Board_compare( struct Board* self, struct Board* other ) 
+void Board_addMove( Board* self, MoveList* moveList, Move move )
 {
-    return memcmp( self, other, sizeof( struct Board ) ) == 0;
+    MoveList_addMove( moveList, move );
 }
-
