@@ -1302,6 +1302,18 @@ bool Board_compare( Board* self, Board* other )
 
 bool Board_isAttacked( Board* self, unsigned long index )
 {
+    static const directionArray[ 8 ][ 2 ] =
+    {
+        {-1,-1},
+        {-1, 0},
+        {-1,+1},
+        { 0,-1},
+        { 0,+1},
+        {+1,-1},
+        {+1, 0},
+        {+1,+1},
+    };
+
     const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
     const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
@@ -1326,98 +1338,93 @@ bool Board_isAttacked( Board* self, unsigned long index )
     }
     
     // Use one method to check for Pawn, Bishop, Rook, Queen, King attack
-    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    for ( short directionIndex = 0; directionIndex < 8; directionIndex++ )
     {
-        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        short rankOffset = directionArray[ directionIndex ][ 1 ];
+        short fileOffset = directionArray[ directionIndex ][ 0 ];
+
+        long targetRank = pieceRank;
+        long targetFile = pieceFile;
+
+        for ( short distance = 1; distance < 8; distance++ )
         {
-            if ( rankOffset == 0 && fileOffset == 0 )
+            targetRank += rankOffset;
+            targetFile += fileOffset;
+
+            if ( targetRank < 0 || targetRank > 7 )
             {
-                continue;
+                break;
             }
 
-            long targetRank = pieceRank;
-            long targetFile = pieceFile;
-
-            for ( short distance = 1; distance < 8; distance++ )
+            if ( targetFile < 0 || targetFile > 7 )
             {
-                targetRank += rankOffset;
-                targetFile += fileOffset;
-
-                if ( targetRank < 0 || targetRank > 7 )
-                {
-                    break;
-                }
-
-                if ( targetFile < 0 || targetFile > 7 )
-                {
-                    break;
-                }
-
-                const unsigned long targetIndex = ( targetRank << 3 ) | targetFile;
-                const unsigned long long targetBit = 1ull << targetIndex;
-
-                // If we hit a friendly piece, then the search in this direction is over
-
-                if ( friendlyPieces->bbAll & targetBit )
-                {
-                    break;
-                }
-
-                // If we hit an attacker, check for what it is - otherwise, continue the search
-
-                if ( attackerPieces->bbAll & targetBit )
-                {
-                    // If we are right next to the original piece, then the opponent king could be involved here
-
-                    if ( distance == 1 )
-                    {
-                        // Test king
-                        if ( attackerPieces->bbKing & targetBit )
-                        {
-                            return true;
-                        }
-                    }
-
-                    // Check the direction of travel to see if we encounter a piece that could attack is in this direction
-
-                    if ( rankOffset == 0 || fileOffset == 0 )
-                    {
-                        // Test horizontal/vertical - rook or queen
-
-                        if ( targetBit & ( attackerPieces->bbRook | attackerPieces->bbQueen ) )
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        // Test diagonals - bishop or queen
-
-                        if ( targetBit & ( attackerPieces->bbBishop | attackerPieces->bbQueen ) )
-                        {
-                            return true;
-                        }
-
-                        // With a bit more logic, we can also test potential pawn captures
-                        // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
-                        // an assessment of whether, if the move was made, the pawn could take us
-
-                        if ( rankOffset == directionOfTravel && distance == 1 )
-                        {
-                            if ( targetBit & attackerPieces->bbPawn )
-                            {
-                                return true;
-                            }
-                        }
-                    }
-
-                    // If we get here, there was an enemy piece detected, just not one that can attack us from here.
-                    // Regardless, it stops the search in this direction
-                    break;
-                }
-
-                // Neither friend or attacker here - move on to the next square in this direction
+                break;
             }
+
+            const unsigned long targetIndex = ( targetRank << 3 ) | targetFile;
+            const unsigned long long targetBit = 1ull << targetIndex;
+
+            // If we hit a friendly piece, then the search in this direction is over
+
+            if ( friendlyPieces->bbAll & targetBit )
+            {
+                break;
+            }
+
+            // If we hit an attacker, check for what it is - otherwise, continue the search
+
+            if ( attackerPieces->bbAll & targetBit )
+            {
+                // If we are right next to the original piece, then the opponent king could be involved here
+
+                if ( distance == 1 )
+                {
+                    // Test king
+                    if ( attackerPieces->bbKing & targetBit )
+                    {
+                        return true;
+                    }
+                }
+
+                // Check the direction of travel to see if we encounter a piece that could attack is in this direction
+
+                if ( rankOffset == 0 || fileOffset == 0 )
+                {
+                    // Test horizontal/vertical - rook or queen
+
+                    if ( targetBit & ( attackerPieces->bbRook | attackerPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Test diagonals - bishop or queen
+
+                    if ( targetBit & ( attackerPieces->bbBishop | attackerPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+
+                    // With a bit more logic, we can also test potential pawn captures
+                    // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
+                    // an assessment of whether, if the move was made, the pawn could take us
+
+                    if ( rankOffset == directionOfTravel && distance == 1 )
+                    {
+                        if ( targetBit & attackerPieces->bbPawn )
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                // If we get here, there was an enemy piece detected, just not one that can attack us from here.
+                // Regardless, it stops the search in this direction
+                break;
+            }
+
+            // Neither friend or attacker here - move on to the next square in this direction
         }
     }
 
@@ -1426,6 +1433,18 @@ bool Board_isAttacked( Board* self, unsigned long index )
 
 bool Board_isAttacking( Board* self, unsigned long index )
 {
+    static const directionArray[ 8 ][ 2 ] = 
+    {
+        {-1,-1},
+        {-1, 0},
+        {-1,+1},
+        { 0,-1},
+        { 0,+1},
+        {+1,-1},
+        {+1, 0},
+        {+1,+1},
+    };
+
     const PieceList* friendlyPieces = self->whiteToMove ? &self->whitePieces : &self->blackPieces;
     const PieceList* attackerPieces = self->whiteToMove ? &self->blackPieces : &self->whitePieces;
 
@@ -1450,96 +1469,92 @@ bool Board_isAttacking( Board* self, unsigned long index )
     }
 
     // Use one method to check for Pawn, Bishop, Rook, Queen, King attack
-    for ( short rankOffset = -1; rankOffset <= +1; rankOffset++ )
+    for ( short directionIndex = 0; directionIndex < 8; directionIndex++ )
     {
-        for ( short fileOffset = -1; fileOffset <= +1; fileOffset++ )
+        short rankOffset = directionArray[ directionIndex ][ 1 ];
+        short fileOffset = directionArray[ directionIndex ][ 0 ];
+
+        long targetRank = pieceRank;
+        long targetFile = pieceFile;
+
+        for ( short distance = 1; distance < 8; distance++ )
         {
-            if ( rankOffset == 0 && fileOffset == 0 )
+            targetRank += rankOffset;
+            targetFile += fileOffset;
+
+            if ( targetRank < 0 || targetRank > 7 )
             {
-                continue;
+                break;
             }
 
-            long targetRank = pieceRank;
-            long targetFile = pieceFile;
-            for ( short distance = 1; distance < 8; distance++ )
+            if ( targetFile < 0 || targetFile > 7 )
             {
-                targetRank += rankOffset;
-                targetFile += fileOffset;
-
-                if ( targetRank < 0 || targetRank > 7 )
-                {
-                    break;
-                }
-
-                if ( targetFile < 0 || targetFile > 7 )
-                {
-                    break;
-                }
-
-                const unsigned long targetIndex = ( targetRank << 3 ) | targetFile;
-                const unsigned long long targetBit = 1ull << targetIndex;
-
-                // If we hit an attacker piece, then the search in this direction is over
-
-                if ( attackerPieces->bbAll & targetBit )
-                {
-                    break;
-                }
-
-                // If we hit an friendly piece, see what it is and then terminate the search in this direction
-
-                if ( friendlyPieces->bbAll & targetBit )
-                {
-                    // If we are right next to the original piece, then even our king counts as an attacker
-
-                    if ( distance == 1 )
-                    {
-                        // Test king
-                        if ( friendlyPieces->bbKing & targetBit )
-                        {
-                            return true;
-                        }
-                    }
-
-                    // Check the direction of travel to see if we encounter a piece that could attack is in this direction
-
-                    if ( rankOffset == 0 || fileOffset == 0 )
-                    {
-                        // Test horizontal/vertical - rook or queen
-
-                        if ( targetBit & ( friendlyPieces->bbRook | friendlyPieces->bbQueen ) )
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        // Test diagonals - bishop or queen
-
-                        if ( targetBit & ( friendlyPieces->bbBishop | friendlyPieces->bbQueen ) )
-                        {
-                            return true;
-                        }
-
-                        // With a bit more logic, we can also test pawn
-                        // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
-                        // an assessment of whether, if the move was made, the pawn could take us
-
-                        if ( rankOffset == -directionOfTravel && distance == 1 )
-                        {
-                            if ( targetBit & friendlyPieces->bbPawn )
-                            {
-                                return true;
-                            }
-                        }
-                    }
-
-                    // Got here because we found a friendly piece that is not an attacker in this direction
-                    break;
-                }
-
-                // If we are here, that was an empty square - keep looking in this direction
+                break;
             }
+
+            const unsigned long targetIndex = ( targetRank << 3 ) | targetFile;
+            const unsigned long long targetBit = 1ull << targetIndex;
+
+            // If we hit an attacker piece, then the search in this direction is over
+
+            if ( attackerPieces->bbAll & targetBit )
+            {
+                break;
+            }
+
+            // If we hit an friendly piece, see what it is and then terminate the search in this direction
+
+            if ( friendlyPieces->bbAll & targetBit )
+            {
+                // If we are right next to the original piece, then even our king counts as an attacker
+
+                if ( distance == 1 )
+                {
+                    // Test king
+                    if ( friendlyPieces->bbKing & targetBit )
+                    {
+                        return true;
+                    }
+                }
+
+                // Check the direction of travel to see if we encounter a piece that could attack is in this direction
+
+                if ( rankOffset == 0 || fileOffset == 0 )
+                {
+                    // Test horizontal/vertical - rook or queen
+
+                    if ( targetBit & ( friendlyPieces->bbRook | friendlyPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    // Test diagonals - bishop or queen
+
+                    if ( targetBit & ( friendlyPieces->bbBishop | friendlyPieces->bbQueen ) )
+                    {
+                        return true;
+                    }
+
+                    // With a bit more logic, we can also test pawn
+                    // Note the use of directionOfTravel here as we are testing whether we can take the pawn as
+                    // an assessment of whether, if the move was made, the pawn could take us
+
+                    if ( rankOffset == -directionOfTravel && distance == 1 )
+                    {
+                        if ( targetBit & friendlyPieces->bbPawn )
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                // Got here because we found a friendly piece that is not an attacker in this direction
+                break;
+            }
+
+            // If we are here, that was an empty square - keep looking in this direction
         }
     }
 
